@@ -2,7 +2,6 @@ import tkinter as tk
 
 '''
 Created on 13 Apr 2017
-
 @author: Andrej Jurco
 '''
 

@@ -7,7 +7,6 @@ from tkinter import ttk
 from tkinter import messagebox
 from desktop.graph import Graph
 from email.generator import _width
-#print('k')
 
 class Desktop(tk.Frame):
     def __init__(self, prog, master=None):
@@ -74,10 +73,10 @@ class Desktop(tk.Frame):
         else:
             for user in self.data:
                 if user['name'] == selected:
-                    self.program.activeUser = user['id']
+                    activeUser = user['id']
                     break
             #print(self.program.activeUser)
-            self.displayUserData(self.program.showUserData(self.program.activeUser))
+            self.displayUserData(self.program.loadUser(activeUser))
 
     def newUserWindow(self, wrongdata=''):
         self.deleteWindow()
@@ -201,11 +200,11 @@ class Desktop(tk.Frame):
         
         self.widgets['listbox'] = tk.Listbox(self.widgets['frame1'], height=7, width=25)
         #print('id sezony je', data['id'])
-        self.seasonData = self.program.showSeasonData(data['id'])
+        self.seasonData = self.program.getUserSeasons()
         #print(self.seasonData)
         if self.seasonData is not None:
             for season in self.seasonData:
-                self.widgets['listbox'].insert(tk.END, season['year'])
+                self.widgets['listbox'].insert(tk.END, text=season['id'], season['year'])
         self.widgets['listbox'].grid(row=0, column=1, rowspan=4)
         
         self.widgets['frame2'] = tk.Frame(self)

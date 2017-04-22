@@ -17,98 +17,58 @@ class Program:
         self.gui.mainloop()
         
     def createUser(self, name, age, cp60, maxHR, yearsOfExperience, strong1, strong2, weak1, weak2, id=0):
-        # data format: 
-        errordata = []
-        user = User(id)
-        if not user.setName(name):
-            errordata.append('username')
-        if not user.setAge(age):
-            errordata.append('age')
-        if not user.setcp60(cp60):
-            errordata.append('cp60')
-        if not user.setmaxHR(maxHR):
-            errordata.append('maximum heart rate')
-        if not user.setYearsOfExperience(yearsOfExperience):
-            errordata.append('years of experience')
-        user.setStrong1(strong1)
-        user.setStrong2(strong2)
-        user.setWeak1(weak1)
-        user.setWeak2(weak2)
-        if errordata == []:
-            conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
-            a=conn.cursor()
-            add_user = ("INSERT INTO tp_user VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)")
-            data_user = (id, cp60, maxHR, name, strong1, strong2, weak1, weak2, yearsOfExperience, age)
-            a.execute(add_user, data_user)
-            conn.commit()
-            get_userID = ("SELECT id FROM tp_user WHERE name='{}' AND cp60={}".format(user.name, user.cp60))
-            a.execute(get_userID)
-            userID = a.fetchone()
-            conn.close()
-            #print(userID)
-            self.activeUser = userID['id']
-            self.gui.displayUserData(self.showUserData(self.activeUser))
+        self.activeUser = User(id)
+        self.activeUser = self.activeUser.createUser(name, age, cp60, maxHR, yearsOfExperience, strong1, strong2, weak1, weak2, id)
+        if type(self.activeUser.errordata) == str:
+            pass
+            # vypisat chybove hlasenie
         else:
-            string = ', '.join(errordata)
-            self.gui.newUserWindow(string)
-    
+            #len nacitat user hub
+            pass
+        
     def loadUser(self, user_id=0):
-        conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
-        a=conn.cursor()
-        get_user = ("SELECT * FROM tp_user WHERE id={} ORDER BY name ASC".format(user_id))
-        a.execute(get_user)
-        data = a.fetchone()
-        a.close()
-        conn.close()
-        return data
+        self.activeUser = User(user_id)
+        self.activeUser.loadUser(user_id)
+        #vypisat user hub
+        ### chyba??? - DOROBIT
     
-    def showUserData(self, user_id):
-        conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
-        a=conn.cursor()
-        get_user = ("SELECT * FROM tp_user WHERE id={} ORDER BY name ASC".format(user_id))
-        a.execute(get_user)
-        data = a.fetchone()
-        a.close()
-        conn.close()
-        return data
+    #===========================================================================
+    # def showUserData(self, user_id):
+    #     conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
+    #     a=conn.cursor()
+    #     get_user = ("SELECT * FROM tp_user WHERE id={} ORDER BY name ASC".format(user_id))
+    #     a.execute(get_user)
+    #     data = a.fetchone()
+    #     a.close()
+    #     conn.close()
+    #     return data
+    #===========================================================================
     
-    def createSeason(self, year, userID=0, id=0):
-        season = Season(id)
-        if not season.setYear(year):
-            return False
-        print('year is ok')
-        conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
-        a=conn.cursor()
-        get_years = ("SELECT year FROM tp_season WHERE user_id={}".format(userID))
-        a.execute(get_years)
-        years = a.fetchall()
-        #print(years)
-        for y in years:
-            if y['year'] == year:
-                a.close()
-                conn.close()
-                return False
-        add_season = ("INSERT INTO tp_season VALUES (%s, %s, %s)")
-        data_season = (id, season.getYear(), userID)
-        a.execute(add_season, data_season)
-        conn.commit()
-        #get_seasonID = ("SELECT id FROM tp_season WHERE year='{}' AND user_id={}".format(year, userID))
-        #a.execute(get_seasonID)
-        #seasonID = a.fetchone()
-        a.close()
-        conn.close()
-        #season = seasonID['id']
-        return True
+    def createSeason(self, year, id=0):
+        self.activeSeason = Season(id)
+        self.activeSeason.createSeason(year, self.activeUser.id)
+        if self.activeSeason.errordata == []:
+            pass
+            #zobrazit season hub
+        else:
+            #chybova prava, navrat na user hub
+            pass
 
-    def showSeasonData(self, season_id):
-        conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
-        a=conn.cursor()
-        get_season = ("SELECT * FROM tp_season WHERE user_id={} ORDER BY year ASC".format(season_id))
-        a.execute(get_season)
-        data = a.fetchall()
-        a.close()
-        conn.close()
-        return data
+    def getUserSeasons(self):
+        seasons = self.activeUser.getUserSeasons()      
+        # poslat dalej
+
+    def getSeasonPlans(self, season_id):
+        self.activeSeason = Season(season_id)
+        self.activeSeason.loadSeason()
+        if self.activeSeason.errordata == []:
+            seasonPlans = self.activeSeason.getPlans()
+            
+            #zobrazit season hub
+        else:
+            #something went wrong message
+            pass
+
     
     def deleteSeason(self, season_id):
         conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)

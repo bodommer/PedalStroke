@@ -1,3 +1,5 @@
+import pymysql
+import pymysql.cursors
 from trainingplan.Season import Season
 
 class User:
@@ -6,6 +8,16 @@ class User:
 
     def setName(self, name):
         if type(name) == str and 0 < len(name) < 21:
+            conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
+            a=conn.cursor()
+            get_names = ("SELECT name FROM tp_user")
+            a.execute(get_names)
+            names = a.fetchall()
+            names = [di['name'] for di in names]
+            if name in names:
+                    a.close()
+                    conn.close()
+                    return False
             self.name = name
             return True
         else:
@@ -108,11 +120,74 @@ class User:
         except:
             return None
         
-    def loadSeasons(self, userID):
-        #nacitanie sezon z databazy
-        #return list_of_seasons ako list
-        pass 
-
-    def newSeason(self, id=0):
-        season = Season(id)
-        # pridat do databazy pretekov pre usera/sezonu
+    def createUser(self, name, age, cp60, maxHR, yearsOfExperience, strong1, strong2, weak1, weak2, id=0):
+        errordata = []
+        if not self.setName(name):
+            errordata.append('username')
+        if not self.setAge(age):
+            errordata.append('age')
+        if not self.setcp60(cp60):
+            errordata.append('cp60')
+        if not self.setmaxHR(maxHR):
+            errordata.append('maximum heart rate')
+        if not self.setYearsOfExperience(yearsOfExperience):
+            errordata.append('years of experience')
+        self.setStrong1(strong1)
+        self.setStrong2(strong2)
+        self.setWeak1(weak1)
+        self.setWeak2(weak2)
+        if errordata == []:
+            conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
+            a=conn.cursor()
+            add_user = ("INSERT INTO tp_user VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)")
+            data_user = (id, cp60, maxHR, name, strong1, strong2, weak1, weak2, yearsOfExperience, age)
+            a.execute(add_user, data_user)
+            conn.commit()
+            get_user_id = ("SELECT id FROM tp_season WHERE name={}".format(name))
+            a.execute(get_user_id)
+            self.id = a.fetchone()
+            conn.close()
+            self.errordata = []
+        else:
+            string = ', '.join(errordata)
+            self.errordata = string 
+            
+    def loadUser(self, user_id=0):
+        conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
+        a=conn.cursor()
+        get_user = ("SELECT * FROM tp_user WHERE id={}".format(user_id))
+        a.execute(get_user)
+        data = a.fetchone()
+        a.close()
+        conn.close()
+        self.setName(data['name'])
+        self.setcp60(data['cp60'])
+        self.setmaxHR(data['maxHR'])
+        self.setStrong1(data['storng1'])
+        self.setStrong2(data['strong2'])
+        self.setWeak1(data['weak1'])
+        self.setWeak2(data['weak2'])
+        self.setYearsOfExperience(data['yearsOfExperience'])
+        self.setAge(data['age'])
+        
+    def loadUserSeasons(self):
+        conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
+        a=conn.cursor()
+        get_seasons = ("SELECT id, year FROM tp_season WHERE user_id={}".format(self.id))
+        a.execute(get_seasons)
+        data = a.fetchall()
+        a.close()
+        conn.close() 
+        return data       
+        
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            

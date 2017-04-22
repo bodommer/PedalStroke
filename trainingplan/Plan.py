@@ -4,8 +4,10 @@ import pymysql.cursors
 from datetime import date
 
 class Plan:
-    def __init__(self, annualHours, season, typeOfPlan, planStart, planEnd, activeUser, age, id=0):
+    def __init__(self, id=0):
         self.id = id
+        
+    def createPlan(self, annualHours, season, typeOfPlan, planStart, planEnd, activeUser, age, seasonID, id=0):
         wrongdata = []
         if not self.setAnnualHours(annualHours):
             wrongdata.append('annual hours')
@@ -33,6 +35,25 @@ class Plan:
         self.setAllRaces(season)
         self.correct = True
         self.wrongdata = wrongdata
+        # po dokonceni vytvarania planu zacne ukladat data do databazy (ak vsetko prebehlo v poriadku a spravne)
+        if self.wrongdata == []:
+            conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
+            a=conn.cursor()
+            add_plan = ("INSERT INTO tp_plan VALUES (%s, %s, %s, %s, %s, %s)")
+            data_plan = (id, annualHours, typeOfPlan, planStart, planEnd, seasonID)
+            a.execute(add_plan, data_plan)
+            conn.commit()
+            get_id = ("SELECT id FROM tp_plan WHERE annualHours={} AND season_id={}".format(annualHours, seasonID))
+            a.execute(get_id)
+            planID = a.fetchone()
+            planID = planID['id']
+            for p in self.planWeeks:
+                add_planWeek = ("INSERT INTO tp_planweek VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)")
+                data_planWeek = (id, p.getAEndurance(), p.getEForce(), p.getEndurance(), p.getForce(), p.getGym(), p.getMaxPower(), p.getMonday(), p.getPeriod(), p.getSpeedSkills(), p.getTest(), p.getWeek(), p.getWeeklyHours(), p.getRace(), planID)
+                a.execute(add_planWeek, data_planWeek)
+                conn.commit()
+            a.close()
+            conn.close()
 
     def setAnnualHours(self, annualHours):
         if type(annualHours) == int and annualHours%50 == 0:
@@ -359,6 +380,16 @@ class Plan:
                         break
         a.close()
         conn.close()
+        
+    def getPlanData(self):    
+        conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
+        a=conn.cursor()
+        get_plan = ("SELECT * FROM tp_planweek WHERE plan_id={} ORDER BY week ASC".format(self.id))
+        a.execute(get_plan)
+        data = a.fetchall()
+        a.close()
+        conn.close()
+        return data
         
         
 class PlanWeek:

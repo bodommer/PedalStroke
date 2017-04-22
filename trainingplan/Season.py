@@ -44,7 +44,7 @@ class Season:
         #pridat do databazy pretekov danej sezony
         race = Race(id)
 
-    def createSeason(self, year, userID=0):
+    def createSeason(self, year, userID=0): # vytvori sezonu - prida do databazy
         self.errordata = self.setYear(year, userID)
         if self.errordata != []:
             return
@@ -56,22 +56,68 @@ class Season:
         conn.commit()
         get_season_id = ("SELECT id FROM tp_season WHERE year={} AND user_id={}".format(year, userID))
         a.execute(get_season_id)
-        self.id = a.fetchone()
+        self.id = a.fetchone()['id']
         a.close()
         conn.close()
-
+        
     def loadSeason(self):
         conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
         a=conn.cursor()
-        get_season = ("SELECT * FROM tp_season WHERE user_id={} ORDER BY year ASC".format(self.id))
+        get_season = ("SELECT * FROM tp_season WHERE id={}".format(self.id))
+        a.execute(get_season)
+        data = a.fetchone()
+        a.close()
+        conn.close()
+        self.year = data['year']
+        
+    def getPlans(self): ## vrati zoznam planov danej sezony
+        conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
+        a=conn.cursor()
+        get_season = ("SELECT * FROM tp_plan WHERE season_id={} ORDER BY year ASC".format(self.id))
         a.execute(get_season)
         data = a.fetchall()
         a.close()
         conn.close()
-        self.errordata = self.setYear(year, userID)
+        return data
+    
+    def getSeasonRaces(self):
+        conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
+        a=conn.cursor()
+        get_races = ("SELECT * FROM tp_seasonrace WHERE season_id={} ORDER BY date ASC".format(self.id))
+        a.execute(get_races)
+        data = a.fetchall()
+        a.close()
+        conn.close()
+        return data
+    
+    def deleteRace(self, race_id):
+        conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
+        a=conn.cursor()
+        delete_race = ("DELETE FROM tp_seasonrace WHERE id={}".format(race_id))
+        a.execute(delete_race)
+        conn.commit()
+        a.close()
+        conn.close()
         
-        
-
+    def showSeasonPlan(self, season_id):
+        conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
+        a=conn.cursor()
+        get_plans = ("SELECT * FROM tp_plan WHERE season_id={} ORDER BY planStart ASC".format(season_id))
+        a.execute(get_plans)
+        data = a.fetchall()
+        a.close()
+        conn.close()
+        return data
+    
+    def deletePlan(self, plan_id):
+        conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
+        a=conn.cursor()
+        delete_plan = ("DELETE FROM tp_plan WHERE id={}".format(plan_id))
+        a.execute(delete_plan)
+        conn.commit()
+        a.close()
+        conn.close()
+    
 class Race:
     def __init__(self, id=0):
         self.id = id
@@ -129,4 +175,32 @@ class Race:
             return self.time
         except:
             return None
+        
+    def createRace(self, name, date, priority, time, seasonID, id=0):
+        self.errordata = []
+        if not self.setName(name):
+            self.errordata.append('name')
+        if not self.setDate(date):
+            self.errordata.append('date')
+        if not self.setPriority(priority):
+            self.errordata.append('priority')
+        if not self.setTime(time):
+            self.errordata.append('time')
+        if self.errordata == []:
+            conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
+            a=conn.cursor()
+            add_race = ("INSERT INTO tp_seasonrace VALUES (%s, %s, %s, %s, %s, %s)")
+            data_race = (id, date, name, priority, time, seasonID)
+            a.execute(add_race, data_race)
+            conn.commit()
+            #===================================================================
+            # get_race_id = ("SELECT id FROM tp_seasonrace WHERE name={} AND priority={} AND time={} AND date={}".format(name, priority, time, date))
+            # a.execute(get_race_id)
+            # self.id = a.fetchone()[0]['id']
+            #===================================================================
+            a.close()
+            conn.close()    
+        else:
+            self.errordata = ', '.join(errordata)
+
         

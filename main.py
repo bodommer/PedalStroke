@@ -11,27 +11,41 @@ from pip._vendor.requests.api import delete
 
 class Program:
     def __init__(self):
+        self.activeUser = self.activeSeason = self.activePlan = None
         root = tk.Tk()
         self.gui = Desktop(self, root)
-        #self.gui.title('pedalstroke')
+        self.gui.chooseUser(self.getListOfUsers())
         self.gui.mainloop()
         
     def createUser(self, name, age, cp60, maxHR, yearsOfExperience, strong1, strong2, weak1, weak2, id=0):
         self.activeUser = User(id)
         self.activeUser = self.activeUser.createUser(name, age, cp60, maxHR, yearsOfExperience, strong1, strong2, weak1, weak2, id)
         if type(self.activeUser.errordata) == str:
-            pass
-            # vypisat chybove hlasenie
+            self.gui.newUserWindow(self.activeUser.errordata)
+            self.gui.messageBox('Wrong data', 'Some of the data you entered were in a wrong format!')
         else:
-            #len nacitat user hub
-            pass
+            self.gui.displayUserData({'name': name, 'age':age, 'cp60':cp60, 'maxHR':maxHR, 'yearsOfExperience':yearsOfExperience, 'strong1':strong1, 'strong2':strong2, 'weak1':weak1, 'weak2':weak2})
+            
         
     def loadUser(self, user_id=0):
         self.activeUser = User(user_id)
         self.activeUser.loadUser(user_id)
-        #vypisat user hub
+        self.gui.displayUserData({'name': self.activeUser.getName(), 'age':self.activeUser.getAge(), 'cp60':self.activeUser.getcp60(), 'maxHR':self.activeUser.getmaxHR(), 
+                                  'yearsOfExperience':self.activeUser.getYearsOfExperience(), 'strong1':self.activeUser.getStrong1(), 'strong2':self.activeUser.getStrong2(), 
+                                  'weak1':self.activeUser.getWeak1(), 'weak2':self.activeUser.getWeak2()})
         ### chyba??? - DOROBIT
-    
+        
+    def getListOfUsers(self):
+        conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
+        a=conn.cursor()
+        get_users = ("SELECT name, id FROM tp_user")
+        a.execute(get_users)
+        data = a.fetchall()
+        a.close()
+        conn.close()
+        return data
+        
+        
     #===========================================================================
     # def showUserData(self, user_id):
     #     conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
@@ -43,20 +57,10 @@ class Program:
     #     conn.close()
     #     return data
     #===========================================================================
-    
-    def createSeason(self, year, id=0):
-        self.activeSeason = Season(id)
-        self.activeSeason.createSeason(year, self.activeUser.id)
-        if self.activeSeason.errordata == []:
-            pass
-            #zobrazit season hub
-        else:
-            #chybova prava, navrat na user hub
-            pass
 
     def getUserSeasons(self):
-        seasons = self.activeUser.getUserSeasons()      
-        # poslat dalej
+        self.seasonData = self.activeUser.getUserSeasons()      
+        return self.seasonData
 
     def getSeasonPlans(self, season_id):
         self.activeSeason = Season(season_id)
@@ -69,128 +73,87 @@ class Program:
             #something went wrong message
             pass
 
-    
-    def deleteSeason(self, season_id):
-        conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
-        a=conn.cursor()
-        delete_season = ("DELETE FROM tp_season WHERE id={}".format(season_id))
-        #print(delete_season)
-        a.execute(delete_season)
-        conn.commit()
-        a.close()
-        conn.close()    
-        return True
-    
     def deleteUser(self):
-        conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
-        a=conn.cursor()
-        delete_user = ("DELETE FROM tp_user WHERE id={}".format(self.activeUser))
-        a.execute(delete_user)
-        conn.commit()
-        a.close()
-        conn.close()
-        return True
-
+        if self.activeUser.deleteUser():
+            self.gui.chooseUser()
+        else:
+            self.gui.messageBox("Delete user error", "User was not deleted")
+    
+    def createSeason(self, year, id=0):
+        self.activeSeason = Season(id)
+        self.activeSeason.createSeason(year, self.activeUser.id)
+        if self.activeSeason.errordata == []:
+            pass
+            #zobrazit season hub
+        else:
+            #chybova prava, navrat na user hub
+            pass
+    
+    def getSeasonRaces(self, season_id):
+        if season_id != self.activeSeason.id:
+            season = Season(season_id)
+            data = season.getSeasonRaces()
+        else:
+            data = self.activeSeason.getSeasonRaces()
+        #zavola funnkciu na zobrazovanie 
         
+    def deleteSeason(self, season_id):
+        self.activeUser.deleteSeason(season_id)
+        self.activeSeason = None
+        #znovu nacitat user hub
+
     def createRace(self, name, date, priority, time, seasonID, id=0):
-        errordata = []
         race = Race(id)
-        if not race.setName(name):
-            errordata.append('name')
-        if not race.setDate(date):
-            errordata.append('date')
-        if not race.setPriority(priority):
-            errordata.append('priority')
-        if not race.setTime(time):
-            errordata.append('time')
-        if errordata == []:
-            conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
-            a=conn.cursor()
-            add_race = ("INSERT INTO tp_seasonrace VALUES (%s, %s, %s, %s, %s, %s)")
-            data_race = (id, race.getDate(), race.getName(), race.getPriority(), race.getTime(), seasonID)
-            a.execute(add_race, data_race)
-            conn.commit()
-            a.close()
-            conn.close()    
-        if errordata != []:
-            errordata = ', '.join(errordata)
-        return errordata
-    
-    def showRaceData(self, season_id):
-        conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
-        a=conn.cursor()
-        get_race = ("SELECT * FROM tp_seasonrace WHERE season_id={} ORDER BY date ASC".format(season_id))
-        a.execute(get_race)
-        data = a.fetchall()
-        a.close()
-        conn.close()
-        return data
-    
+        race.createRace(name, date, priority, time, seasonID)
+        #znovu nacitat user hub
+
     def deleteRace(self, race_id):
-        conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
-        a=conn.cursor()
-        delete_race = ("DELETE FROM tp_seasonrace WHERE id={}".format(race_id))
-        a.execute(delete_race)
-        conn.commit()
-        a.close()
-        conn.close()
+        if self.activeSeason is not None:
+            self.activeSeason.deleteRace(race_id)
+        else:
+            season = Season(1)
+            season.deleteRace(race_id)
+        self.gui.displayUserData({'name': self.activeUser.getName(), 'age':self.activeUser.getAge(), 'cp60':self.activeUser.getcp60(), 'maxHR':self.activeUser.getmaxHR(), 
+                                  'yearsOfExperience':self.activeUser.getYearsOfExperience(), 'strong1':self.activeUser.getStrong1(), 'strong2':self.activeUser.getStrong2(), 
+                                  'weak1':self.activeUser.getWeak1(), 'weak2':self.activeUser.getWeak2()})
     
     def createPlan(self, annualHours, seasonID, typeOfPlan, planStart, planEnd, activeUserID, id=0):
-        age = self.loadUser(activeUserID)['age']
-        plan = Plan(annualHours, seasonID, typeOfPlan, planStart, planEnd, activeUserID, age, id=0)
-        if plan.wrongdata == []:
-            conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
-            a=conn.cursor()
-            add_plan = ("INSERT INTO tp_plan VALUES (%s, %s, %s, %s, %s, %s)")
-            data_plan = (id, annualHours, typeOfPlan, planStart, planEnd, seasonID)
-            a.execute(add_plan, data_plan)
-            conn.commit()
-            get_id = ("SELECT id FROM tp_plan WHERE annualHours={} AND season_id={}".format(annualHours, seasonID))
-            a.execute(get_id)
-            planID = a.fetchone()
-            planID = planID['id']
-            for p in plan.planWeeks:
-                add_planWeek = ("INSERT INTO tp_planweek VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)")
-                data_planWeek = (id, p.getAEndurance(), p.getEForce(), p.getEndurance(), p.getForce(), p.getGym(), p.getMaxPower(), p.getMonday(), p.getPeriod(), p.getSpeedSkills(), p.getTest(), p.getWeek(), p.getWeeklyHours(), p.getRace(), planID)
-                a.execute(add_planWeek, data_planWeek)
-                conn.commit()
-            a.close()
-            conn.close()
-        return plan.wrongdata
-        
-    def showSeasonPlan(self, season_id):
-        conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
-        a=conn.cursor()
-        get_plans = ("SELECT * FROM tp_plan WHERE season_id={} ORDER BY planStart ASC".format(season_id))
-        a.execute(get_plans)
-        data = a.fetchall()
-        a.close()
-        conn.close()
-        return data
+        self.activePlan = Plan(annualHours, seasonID, typeOfPlan, planStart, planEnd, activeUserID, self.activeUser.getAge(), self.activeSeason.id, id=0)
+        if self.activePlan.wrongdata == []:
+            #zobrazi plan hub
+            pass
+        else:
+            #zobrazi znova formular, ale vypise chybne polozky
+            pass
                                
     def showPlan(self, plan_id):
-        conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
-        a=conn.cursor()
-        get_plan = ("SELECT * FROM tp_planweek WHERE plan_id={} ORDER BY week ASC".format(plan_id))
-        a.execute(get_plan)
-        data = a.fetchall()
-        a.close()
-        conn.close()
-        return data
-    
+        self.activePlan = Plan(plan_id)
+        data = self.activePlan.getPlanData()
+        #zavola metodu na zobreazenie plan hubu
+
+    def deletePlan(self, plan_id):
+        self.activeSeason.deletePlan(plan_id)
+        self.activePlan = None
+            
+    #===========================================================================
+    # def getSeasonPlans(self, season_id):
+    #
+    #     DUPLIKAT
+    #
+    #     conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
+    #     a=conn.cursor()
+    #     get_plans = ("SELECT * FROM tp_plan WHERE season_id={} ORDER BY planStart ASC".format(season_id))
+    #     a.execute(get_plans)
+    #     data = a.fetchall()
+    #     a.close()
+    #     conn.close()
+    #     return data
+    #===========================================================================
+
     def showPlanWeek(self, plan_id):
         #zobrazia sa vsetky dni daneho tyzdna
         pass
     
-    def deletePlan(self, plan_id):
-        conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
-        a=conn.cursor()
-        delete_plan = ("DELETE FROM tp_plan WHERE id={}".format(plan_id))
-        a.execute(delete_plan)
-        conn.commit()
-        a.close()
-        conn.close()
-
 #===============================================================================
 # activeUser = createUser('Andrej', 20, 200, 180, 2, 'endurance', 'speed skills', 'anaerobic endurance', 'max power')
 # print('hotovo')

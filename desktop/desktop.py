@@ -10,17 +10,15 @@ from email.generator import _width
 
 class Desktop(tk.Frame):
     def __init__(self, prog, master=None):
-        self.season_id = False
         super().__init__(master, width=1000)
         master.title('PedalStroke v1.0')
-        #self.title('pedalstroke')
         self.master = master
         self.pack()
         self.widgets = {}
         self.program = prog
-        self.chooseUser()
+
         
-    def chooseUser(self):
+    def chooseUser(self, data):
         self.deleteWindow()
         self.widgets = {}
         self.config()
@@ -28,23 +26,16 @@ class Desktop(tk.Frame):
         self.widgets['title'] = tk.Label(self, text='Please, choose user:')
         self.widgets['title'].grid(row=0, columnspan=4)
         
-        conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
-        a=conn.cursor()
-        get_users = ("SELECT name, id FROM tp_user")
-        a.execute(get_users)
-        self.data = a.fetchall()
-        a.close()
-        conn.close()
-        
-        self.userName = tk.StringVar(self)
-        self.userName.set('Create user')
+        userName = tk.StringVar(self)
+        userName.set('Create user')
         li = []
         li.append('Create user')
-        for i in self.data:
+        for i in data:
             li.append(i['name'])
         
-        self.widgets['dropdown'] =tk.OptionMenu(self, self.userName, *tuple(li))
+        self.widgets['dropdown'] =tk.OptionMenu(self, userName, *tuple(li))
         self.widgets['dropdown'].grid(row=1)
+        
 #===============================================================================
 #         self.widgets['scrollbar'] = tk.Scrollbar(self)
 #         self.widgets['scrollbar'].grid(column=2, row=1)
@@ -60,23 +51,22 @@ class Desktop(tk.Frame):
             
         self.widgets['confirm'] = tk.Button(self, text='Confirm')
         self.widgets['confirm'].grid(row=4, sticky='W', padx=5, pady=5)
-        self.widgets['confirm'].bind('<Button-1>', self.chosenUser)        
+        self.widgets['confirm'].bind('<Button-1>', chosenUser)        
         
         self.widgets['quit'] = tk.Button(self, text='Quit')
         self.widgets['quit'].grid(row=4, sticky='E', padx=5, pady=5)
         self.widgets['quit'].bind('<Button-1>', self.quitApp)
 
-    def chosenUser(self, event):
-        selected = self.userName.get()
-        if selected == 'Create user':
-            self.newUserWindow()
-        else:
-            for user in self.data:
-                if user['name'] == selected:
-                    activeUser = user['id']
-                    break
-            #print(self.program.activeUser)
-            self.displayUserData(self.program.loadUser(activeUser))
+        def chosenUser(event):
+            selected = userName.get()
+            if selected == 'Create user':
+                self.newUserWindow()
+            else:
+                for user in data:
+                    if user['name'] == selected:
+                        activeUser = user['id']
+                        break
+                self.displayUserData(self.program.loadUser(activeUser))
 
     def newUserWindow(self, wrongdata=''):
         self.deleteWindow()
@@ -153,15 +143,14 @@ class Desktop(tk.Frame):
         
         self.widgets['confirm'] = tk.Button(self, text='Create', height=2, width=7)
         self.widgets['confirm'].grid(row=15, sticky='W', padx=5, pady=5)
-        self.widgets['confirm'].bind('<Button-1>', self.testValues)        
+        self.widgets['confirm'].bind('<Button-1>', createUser)        
         
         self.widgets['quit'] = tk.Button(self, text='Quit', height=2, width=7)
         self.widgets['quit'].grid(row=15, column=4, sticky='E', padx=5, pady=5)
         self.widgets['quit'].bind('<Button-1>', self.quitApp)
         
-    def testValues(self, event):
-        #print(self.widgets['name'].get(), self.widgets['age'].get(), self.widgets['cp60'].get(), self.widgets['maxHR'].get(), self.widgets['yearsOfExperience'].get(), self.strong1.get(), self.strong2.get(), self.weak1.get(), self.weak2.get())
-        self.program.createUser(self.widgets['name'].get(), int(self.widgets['age'].get()), int(self.widgets['cp60'].get()), int(self.widgets['maxHR'].get()), int(self.widgets['yearsOfExperience'].get()), self.strong1.get(), self.strong2.get(), self.weak1.get(), self.weak2.get())
+        def createUser(event):
+            self.program.createUser(self.widgets['name'].get(), int(self.widgets['age'].get()), int(self.widgets['cp60'].get()), int(self.widgets['maxHR'].get()), int(self.widgets['yearsOfExperience'].get()), self.strong1.get(), self.strong2.get(), self.weak1.get(), self.weak2.get())
 
     def displayUserData(self, data):
         self.userData = data
@@ -199,12 +188,10 @@ class Desktop(tk.Frame):
         self.widgets['weak2'].grid(row=5, column=1, padx=5, pady=5)
         
         self.widgets['listbox'] = tk.Listbox(self.widgets['frame1'], height=7, width=25)
-        #print('id sezony je', data['id'])
-        self.seasonData = self.program.getUserSeasons()
-        #print(self.seasonData)
-        if self.seasonData is not None:
+        seasonData = self.program.getUserSeasons()
+        if seasonData is not None:
             for season in self.seasonData:
-                self.widgets['listbox'].insert(tk.END, text=season['id'], season['year'])
+                self.widgets['listbox'].insert(tk.END, text=season['id'], values=season['year'])
         self.widgets['listbox'].grid(row=0, column=1, rowspan=4)
         
         self.widgets['frame2'] = tk.Frame(self)
@@ -233,8 +220,8 @@ class Desktop(tk.Frame):
                             if self.selectedSeason != ():
                                 #print('a')
                                 season = self.widgets['listbox'].curselection()[0]
-                                season_id = self.seasonData[season]['id']
-                                data = self.program.showRaceData(season_id)
+                                season_id = seasonData[season]['id']
+                                data = self.program.getSeasonData(season_id)
                                 self.delTree()
                                 if data is not None:
                                     for race in data:
@@ -249,202 +236,181 @@ class Desktop(tk.Frame):
         
         self.widgets['changeUser'] = tk.Button(self.widgets['frame3'], text='Change user', height=2, width=10)
         self.widgets['changeUser'].grid(row=0, column=0, sticky='E', padx=5, pady=5)
-        self.widgets['changeUser'].bind('<Button-1>', self.changeUser)
+        self.widgets['changeUser'].bind('<Button-1>', changeUser)
 
         self.widgets['deleteUser'] = tk.Button(self.widgets['frame3'], text='Delete\ncurrent user', height=2, width=9)
         self.widgets['deleteUser'].grid(row=0, column=1, sticky='E', padx=5, pady=5)
-        self.widgets['deleteUser'].bind('<Button-1>', self.deleteUser)
+        self.widgets['deleteUser'].bind('<Button-1>', deleteUser)
         
         self.widgets['addSeason'] = tk.Button(self.widgets['frame3'], text='Add season', height=2, width=9)
         self.widgets['addSeason'].grid(row=0, column=2, sticky='E', padx=5, pady=5)
-        self.widgets['addSeason'].bind('<Button-1>', self.newSeasonWindow)
+        self.widgets['addSeason'].bind('<Button-1>', newSeasonWindow)
         
         self.widgets['showPlans'] = tk.Button(self.widgets['frame3'], text="Show season's\nplans", height=2, width=11)
         self.widgets['showPlans'].grid(row=0, column=3, sticky='E', padx=5, pady=5)
-        self.widgets['showPlans'].bind('<Button-1>', self.displayPlans)
+        self.widgets['showPlans'].bind('<Button-1>', displayPlans)
         
         self.widgets['deleteSeason'] = tk.Button(self.widgets['frame3'], text='Delete\nseason', height=2, width=10)
         self.widgets['deleteSeason'].grid(row=1, column=0, sticky='E', padx=5, pady=5)
-        self.widgets['deleteSeason'].bind('<Button-1>', self.deleteSeason)
+        self.widgets['deleteSeason'].bind('<Button-1>', deleteSeason)
         
         self.widgets['addRace'] = tk.Button(self.widgets['frame3'], text='Add race', height=2, width=9)
         self.widgets['addRace'].grid(row=1, column=1, sticky='E', padx=5, pady=5)
-        self.widgets['addRace'].bind('<Button-1>', self.newRaceWindow)
+        self.widgets['addRace'].bind('<Button-1>', newRaceWindow)
         
         self.widgets['deleteRace'] = tk.Button(self.widgets['frame3'], text='Delete race', height=2, width=9)
         self.widgets['deleteRace'].grid(row=1, column=2, sticky='E', padx=5, pady=5)
-        self.widgets['deleteRace'].bind('<Button-1>', self.deleteRace)
+        self.widgets['deleteRace'].bind('<Button-1>', deleteRace)
         
         self.widgets['quit'] = tk.Button(self.widgets['frame3'], text='Quit', height=2, width=11)
         self.widgets['quit'].grid(row=1, column=3, sticky='E', padx=5, pady=5)
         self.widgets['quit'].bind('<Button-1>', self.quitApp)
-            
-        self.selectedSeason = ()
-        displayRaces()
-        
-    def delTree(self):
-        for row in self.widgets['tree'].get_children():
-            self.widgets['tree'].delete(row)
-        
-    def changeUser(self, event):
-        self.run = False
-        self.chooseUser()
-        
-    def deleteUser(self, event):
-        self.run = False
-        if self.program.deleteUser():
+
+        def changeUser(event):
+            self.run = False
             self.chooseUser()
-        else:
-            self.widgets['failMesage'] = messagebox.showinfo("Delete user error", "User was not deleted")
-        #pop-up ze to neprebehlo spravne
         
-    def deleteRace(self, event):
-        selectedItem = self.widgets['tree'].focus()
-        if self.widgets['tree'].item(selectedItem)['values'] != '':
-            self.program.deleteRace(self.widgets['tree'].item(selectedItem)['text'])
-            self.displayUserData(self.program.showUserData(self.program.activeUser))
+        def deleteUser(event):
+            self.run = False
+            self.program.deleteUser()
+        
+        def deleteRace(event):
+            selectedItem = self.widgets['tree'].focus()
+            if self.widgets['tree'].item(selectedItem)['values'] != '':
+                self.program.deleteRace(self.widgets['tree'].item(selectedItem)['text'])
     
-    def newSeasonWindow(self, event):
-        self.run = False
-        self.deleteWindow()
-        self.widgets = {}
-        
-        self.widgets['frame1'] = tk.Frame(self)
-        self.widgets['frame1'].grid(row=0, rowspan=2, columnspan=2, padx=5, pady=5)
-    
-        self.widgets['yearLabel'] = tk.Label(self.widgets['frame1'], text='Select the year of season: ')
-        self.widgets['yearLabel'].grid(row=0, padx=5, pady=5)
-        self.widgets['year'] = tk.Spinbox(self.widgets['frame1'], from_=2015, to=2050, increment=1, justify='center', relief='flat')
-        self.widgets['year'].grid(row=0, column=1, padx=5, pady=5)  
-        
-        self.widgets['createSeason'] = tk.Button(self.widgets['frame1'], text='Create\nnew season', height=2, width=11)
-        self.widgets['createSeason'].grid(row=1, column=0, sticky='E', padx=5, pady=5)
-        self.widgets['createSeason'].bind('<Button-1>', self.createSeason)
-        
-        self.widgets['cancel'] = tk.Button(self.widgets['frame1'], text='Cancel', height=2, width=11)
-        self.widgets['cancel'].grid(row=1, column=1, sticky='E', padx=5, pady=5)
-        self.widgets['cancel'].bind('<Button-1>', self.backToUserDataView)
-        
-    def deleteSeason(self, event):
-        self.run = False
-        if self.widgets['listbox'].curselection():
-            season_id = self.seasonData[self.widgets['listbox'].curselection()[0]]['id']    
-            if self.program.deleteSeason(season_id):
-                self.displayUserData(self.program.showUserData(self.program.activeUser))
-    
-    def newRaceWindow(self, event, season_id=0, errordata=''):
-        if season_id or self.widgets['listbox'].curselection(): 
-            if season_id == 0:
-                self.season = self.seasonData[self.widgets['listbox'].curselection()[0]]['id']
+        def newSeasonWindow(event):
             self.run = False
             self.deleteWindow()
-            self.widgets = {}  
+            self.widgets = {}
             
-            self.widgets['title'] = tk.Label(self, text='Fill in the data.', anchor='e', font='Arial 12')
-            self.widgets['title'].grid(row=0, columnspan=6, padx=10, pady=10)  
-            
-            if errordata != '': 
-                self.widgets['errordata'] = tk.Label(self, text='Wrongly entered fields: {}'.format(errordata), anchor='e', font='Arial 9')
-                self.widgets['errordata'].grid(row=1, columnspan=6, padx=10, pady=10) 
-  
             self.widgets['frame1'] = tk.Frame(self)
-            self.widgets['frame1'].grid(row=2, rowspan=5, columnspan=6, padx=5, pady=5)  
-            
-            self.widgets['nameLabel'] = tk.Label(self.widgets['frame1'], text='Name of the race: ', width = 45)
-            self.widgets['nameLabel'].grid(padx=5, pady=5)     
-            self.widgets['name'] = tk.Entry(self.widgets['frame1'], justify='center', relief='flat')
-            self.widgets['name'].grid(row=0, column=1, padx=5, pady=5, columnspan=5)  
-            
-            self.widgets['datelabel'] = tk.Label(self.widgets['frame1'], text='Race date (dd.mm.yy): ')
-            self.widgets['datelabel'].grid(row=1, pady=5)
-            self.widgets['day'] = tk.Spinbox(self.widgets['frame1'], from_=1, to=31, increment=1, justify='center', relief='flat', width=2)
-            self.widgets['day'].grid(row=1, column=1) 
-            self.widgets['dotLabel'] = tk.Label(self.widgets['frame1'], text='.', width=1)
-            self.widgets['dotLabel'].grid(row=1, column=2)  
-            self.widgets['month'] = tk.Spinbox(self.widgets['frame1'], from_=1, to=12, increment=1, justify='center', relief='flat', width=2)
-            self.widgets['month'].grid(row=1, column=3) 
-            self.widgets['dot2Label'] = tk.Label(self.widgets['frame1'], text='.', width=1)
-            self.widgets['dot2Label'].grid(row=1, column=4)     
-            self.widgets['year'] = tk.Spinbox(self.widgets['frame1'], from_=15, to=50, increment=1, justify='center', relief='flat', width=2)
-            self.widgets['year'].grid(row=1, column=5)         
+            self.widgets['frame1'].grid(row=0, rowspan=2, columnspan=2, padx=5, pady=5)
         
-            self.widgets['prioritylabel'] = tk.Label(self.widgets['frame1'], text='Race priority: ')
-            self.widgets['prioritylabel'].grid(row=2, pady=5)
-            self.widgets['priority'] = tk.Spinbox(self.widgets['frame1'], from_=1, to=3, increment=1, justify='center', relief='flat', width=2)
-            self.widgets['priority'].grid(row=2, column=1)     
-
-            self.widgets['timelabel'] = tk.Label(self.widgets['frame1'], text='Race duration(hh:mm): ')
-            self.widgets['timelabel'].grid(row=3, pady=5)
-            self.widgets['hour'] = tk.Spinbox(self.widgets['frame1'], from_=0, to=167, increment=1, justify='center', relief='flat', width=3)
-            self.widgets['hour'].grid(row=3, column=1) 
-            self.widgets['colonLabel'] = tk.Label(self.widgets['frame1'], text=':', width=1)
-            self.widgets['colonLabel'].grid(row=3, column=2)  
-            self.widgets['minute'] = tk.Spinbox(self.widgets['frame1'], from_=0, to=59, increment=1, justify='center', relief='flat', width=2)
-            self.widgets['minute'].grid(row=3, column=3)    
-
-            self.widgets['frame2'] = tk.Frame(self)
-            self.widgets['frame2'].grid(row=7, rowspan=1, columnspan=6, padx=5, pady=5) 
+            self.widgets['yearLabel'] = tk.Label(self.widgets['frame1'], text='Select the year of season: ')
+            self.widgets['yearLabel'].grid(row=0, padx=5, pady=5)
+            self.widgets['year'] = tk.Spinbox(self.widgets['frame1'], from_=2015, to=2050, increment=1, justify='center', relief='flat')
+            self.widgets['year'].grid(row=0, column=1, padx=5, pady=5)  
             
-            self.widgets['createSeason'] = tk.Button(self.widgets['frame2'], text='Create\nnew race', height=2, width=11)
+            self.widgets['createSeason'] = tk.Button(self.widgets['frame1'], text='Create\nnew season', height=2, width=11)
             self.widgets['createSeason'].grid(row=1, column=0, sticky='E', padx=5, pady=5)
-            self.widgets['createSeason'].bind('<Button-1>', self.createRace)
+            self.widgets['createSeason'].bind('<Button-1>', createSeason)
             
-            self.widgets['cancel'] = tk.Button(self.widgets['frame2'], text='Cancel', height=2, width=11)
+            self.widgets['cancel'] = tk.Button(self.widgets['frame1'], text='Cancel', height=2, width=11)
             self.widgets['cancel'].grid(row=1, column=1, sticky='E', padx=5, pady=5)
-            self.widgets['cancel'].bind('<Button-1>', self.backToUserDataView)  
-    
-    def createSeason(self, event):
-        self.run = False
-        if self.program.createSeason(int(self.widgets['year'].get()), self.program.activeUser):
-            self.displayUserData(self.program.showUserData(self.program.activeUser))
-        else:
-            self.widgets['failMesage'] = messagebox.showinfo("Season creation error", "This season already exists!")
-
-            
-    def createRace(self, event):
-        self.run = False
-        name = self.widgets['name'].get()
-        date = datetime.date(int(self.widgets['year'].get())+2000, int(self.widgets['month'].get()), int(self.widgets['day'].get()))
-        priority = int(self.widgets['priority'].get())
-        time = datetime.time(int(self.widgets['hour'].get()), int(self.widgets['minute'].get()))
-        season_id = self.season
+            self.widgets['cancel'].bind('<Button-1>', backToUserDataView)
         
-        result = self.program.createRace(name, date, priority, time, season_id)
-        #print('result', result)
-        if result == []:
-            #print('lol')
-            self.displayUserData(self.program.showUserData(self.program.activeUser))
-        else:
-            self.widgets['failMesage'] = messagebox.showinfo("Race creation error", "Race was not added:\nInput data were probably wrong")
-            self.newRaceWindow(1, self.season, errordata=result)
-   
-    def backToUserDataView(self, event):
-        self.displayUserData(self.userData)
-        
-    def deleteWindow(self):
-        for wid in self.widgets.keys():
-            try:
-                self.widgets[wid].destroy()
-            except:
-                pass
-        self.widgets = {}
-                
-    def displayPlans(self, event, back=True):
-        #if not self.season_id:
-        if back:
+        def displayPlans(back=True):
+            if back:
+                if self.widgets['listbox'].curselection():
+                    self.season_id = self.seasonData[self.widgets['listbox'].curselection()[0]]['id']
+                    self.seasonYear = self.seasonData[self.widgets['listbox'].curselection()[0]]['year']
+                    self.displaySeasonPlans()
+            else:
+                self.displaySeasonPlans()   
+             
+        def deleteSeason(event):
+            self.run = False
             if self.widgets['listbox'].curselection():
-                self.season_id = self.seasonData[self.widgets['listbox'].curselection()[0]]['id']
-                self.seasonYear = self.seasonData[self.widgets['listbox'].curselection()[0]]['year']
-                self.displaySeasonPlans()
-        else:
-            self.displaySeasonPlans()
+                season_id = self.seasonData[self.widgets['listbox'].curselection()[0]]['id']    
+                if self.program.deleteSeason(season_id):
+                    self.displayUserData(self.program.showUserData(self.program.activeUser))
+    
+        def newRaceWindow(event, season_id=0, errordata=''):
+            if season_id or self.widgets['listbox'].curselection(): 
+                if season_id == 0:
+                    self.season = self.seasonData[self.widgets['listbox'].curselection()[0]]['id']
+                self.run = False
+                self.deleteWindow()
+                self.widgets = {}  
+                
+                self.widgets['title'] = tk.Label(self, text='Fill in the data.', anchor='e', font='Arial 12')
+                self.widgets['title'].grid(row=0, columnspan=6, padx=10, pady=10)  
+                
+                if errordata != '': 
+                    self.widgets['errordata'] = tk.Label(self, text='Wrongly entered fields: {}'.format(errordata), anchor='e', font='Arial 9')
+                    self.widgets['errordata'].grid(row=1, columnspan=6, padx=10, pady=10) 
+      
+                self.widgets['frame1'] = tk.Frame(self)
+                self.widgets['frame1'].grid(row=2, rowspan=5, columnspan=6, padx=5, pady=5)  
+                
+                self.widgets['nameLabel'] = tk.Label(self.widgets['frame1'], text='Name of the race: ', width = 45)
+                self.widgets['nameLabel'].grid(padx=5, pady=5)     
+                self.widgets['name'] = tk.Entry(self.widgets['frame1'], justify='center', relief='flat')
+                self.widgets['name'].grid(row=0, column=1, padx=5, pady=5, columnspan=5)  
+                
+                self.widgets['datelabel'] = tk.Label(self.widgets['frame1'], text='Race date (dd.mm.yy): ')
+                self.widgets['datelabel'].grid(row=1, pady=5)
+                self.widgets['day'] = tk.Spinbox(self.widgets['frame1'], from_=1, to=31, increment=1, justify='center', relief='flat', width=2)
+                self.widgets['day'].grid(row=1, column=1) 
+                self.widgets['dotLabel'] = tk.Label(self.widgets['frame1'], text='.', width=1)
+                self.widgets['dotLabel'].grid(row=1, column=2)  
+                self.widgets['month'] = tk.Spinbox(self.widgets['frame1'], from_=1, to=12, increment=1, justify='center', relief='flat', width=2)
+                self.widgets['month'].grid(row=1, column=3) 
+                self.widgets['dot2Label'] = tk.Label(self.widgets['frame1'], text='.', width=1)
+                self.widgets['dot2Label'].grid(row=1, column=4)     
+                self.widgets['year'] = tk.Spinbox(self.widgets['frame1'], from_=15, to=50, increment=1, justify='center', relief='flat', width=2)
+                self.widgets['year'].grid(row=1, column=5)         
+            
+                self.widgets['prioritylabel'] = tk.Label(self.widgets['frame1'], text='Race priority: ')
+                self.widgets['prioritylabel'].grid(row=2, pady=5)
+                self.widgets['priority'] = tk.Spinbox(self.widgets['frame1'], from_=1, to=3, increment=1, justify='center', relief='flat', width=2)
+                self.widgets['priority'].grid(row=2, column=1)     
+    
+                self.widgets['timelabel'] = tk.Label(self.widgets['frame1'], text='Race duration(hh:mm): ')
+                self.widgets['timelabel'].grid(row=3, pady=5)
+                self.widgets['hour'] = tk.Spinbox(self.widgets['frame1'], from_=0, to=167, increment=1, justify='center', relief='flat', width=3)
+                self.widgets['hour'].grid(row=3, column=1) 
+                self.widgets['colonLabel'] = tk.Label(self.widgets['frame1'], text=':', width=1)
+                self.widgets['colonLabel'].grid(row=3, column=2)  
+                self.widgets['minute'] = tk.Spinbox(self.widgets['frame1'], from_=0, to=59, increment=1, justify='center', relief='flat', width=2)
+                self.widgets['minute'].grid(row=3, column=3)    
+    
+                self.widgets['frame2'] = tk.Frame(self)
+                self.widgets['frame2'].grid(row=7, rowspan=1, columnspan=6, padx=5, pady=5) 
+                
+                self.widgets['createSeason'] = tk.Button(self.widgets['frame2'], text='Create\nnew race', height=2, width=11)
+                self.widgets['createSeason'].grid(row=1, column=0, sticky='E', padx=5, pady=5)
+                self.widgets['createSeason'].bind('<Button-1>', self.createRace)
+                
+                self.widgets['cancel'] = tk.Button(self.widgets['frame2'], text='Cancel', height=2, width=11)
+                self.widgets['cancel'].grid(row=1, column=1, sticky='E', padx=5, pady=5)
+                self.widgets['cancel'].bind('<Button-1>', self.backToUserDataView)  
+    
+        def createSeason(event):
+            self.run = False
+            if self.program.createSeason(int(self.widgets['year'].get()), self.program.activeUser):
+                self.displayUserData(self.program.showUserData(self.program.activeUser))
+            else:
+                self.messageBox("Season creation error", "This season already exists!")
+    
+        def createRace(event):
+            self.run = False
+            name = self.widgets['name'].get()
+            date = datetime.date(int(self.widgets['year'].get())+2000, int(self.widgets['month'].get()), int(self.widgets['day'].get()))
+            priority = int(self.widgets['priority'].get())
+            time = datetime.time(int(self.widgets['hour'].get()), int(self.widgets['minute'].get()))
+            season_id = self.season
+            
+            result = self.program.createRace(name, date, priority, time, season_id)
+            if result == []:
+                self.displayUserData(self.program.showUserData(self.program.activeUser))
+            else:
+                self.messageBox("Race creation error", "Race was not added:\nInput data were probably wrong")
+                self.newRaceWindow(1, self.season, errordata=result)
+       
+        def backToUserDataView(self, event):
+            self.displayUserData(self.userData)
+        
+        self.selectedSeason = ()
+        displayRaces()
     
     def displaySeasonPlans(self):
         self.run = False
         self.deleteWindow()
         self.widgets = {}
         
-        self.planData = self.program.showSeasonPlan(self.season_id)
+        self.planData = self.program.getSeasonPlans(self.season_id)
         
         self.widgets['frame1'] = tk.Frame(self)
         self.widgets['frame1'].grid(rowspan=1, columnspan=2, padx=5, pady=5)
@@ -584,7 +550,6 @@ class Desktop(tk.Frame):
         selectedItem = self.widgets['tree'].focus()
         if self.widgets['tree'].item(selectedItem)['values'] != '':
             self.planViewData = self.program.showPlan(self.widgets['tree'].item(selectedItem)['text'])
-            #print(self.widgets['tree'].item(selectedItem)['values'])
             self.showPlanWindow(self.planViewData, self.widgets['tree'].item(selectedItem)['values'])
             self.plan_id = self.widgets['tree'].item(selectedItem)['text']
         
@@ -659,8 +624,6 @@ class Desktop(tk.Frame):
                                             convert(week['test'])))
             self.widgets['tree'].pack()
 
-        #for week in data:
-            #print(week)
         self.widgets['frame3'] = tk.Frame(self)
         self.widgets['frame3'].grid(row=27, rowspan=2, columnspan=4, padx=5, pady=5)
         self.widgets['frame4'] = tk.Frame(self)
@@ -685,10 +648,24 @@ class Desktop(tk.Frame):
         if self.widgets['tree'].item(selectedItem)['values'] != '':
             self.program.deletePlan(self.widgets['tree'].item(selectedItem)['text'])
             self.displaySeasonPlans()
+            
+    def delTree(self):
+        for row in self.widgets['tree'].get_children():
+            self.widgets['tree'].delete(row)
+        
+    def deleteWindow(self):
+        for wid in self.widgets.keys():
+            try:
+                self.widgets[wid].destroy()
+            except:
+                pass
+        self.widgets = {}
+        
+    def messageBox(self, title, body):
+        self.widgets['failMesage'] = messagebox.showinfo(title, body)
 
     def quitApp(self, event):
         self.quit()
 
 if __name__ == '__main__':
     myapp = Desktop()
-    #myapp.mainloop()

@@ -145,7 +145,7 @@ class User:
             conn.commit()
             get_user_id = ("SELECT id FROM tp_season WHERE name={}".format(name))
             a.execute(get_user_id)
-            self.id = a.fetchone()
+            self.id = a.fetchone()['id']
             conn.close()
             self.errordata = []
         else:
@@ -170,7 +170,7 @@ class User:
         self.setYearsOfExperience(data['yearsOfExperience'])
         self.setAge(data['age'])
         
-    def loadUserSeasons(self):
+    def getUserSeasons(self):
         conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
         a=conn.cursor()
         get_seasons = ("SELECT id, year FROM tp_season WHERE user_id={}".format(self.id))
@@ -178,10 +178,26 @@ class User:
         data = a.fetchall()
         a.close()
         conn.close() 
-        return data       
-        
-            
-            
+        return data
+    
+    def deleteSeason(self, season_id):
+        conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
+        a=conn.cursor()
+        delete_season = ("DELETE FROM tp_season WHERE id={} AND user_ID={}".format(season_id, self.id))
+        a.execute(delete_season)
+        conn.commit()
+        a.close()
+        conn.close()     
+              
+    def deleteUser(self):
+        conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
+        a=conn.cursor()
+        delete_user = ("DELETE FROM tp_user WHERE id={}".format(self.id))
+        a.execute(delete_user)
+        conn.commit()
+        a.close()
+        conn.close()
+        return True
             
             
             

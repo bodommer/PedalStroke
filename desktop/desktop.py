@@ -152,8 +152,7 @@ class Desktop(tk.Frame):
         def createUser(event):
             self.program.createUser(self.widgets['name'].get(), int(self.widgets['age'].get()), int(self.widgets['cp60'].get()), int(self.widgets['maxHR'].get()), int(self.widgets['yearsOfExperience'].get()), self.strong1.get(), self.strong2.get(), self.weak1.get(), self.weak2.get())
 
-    def displayUserData(self, data):
-        self.userData = data
+    def displayUserData(self, data, seasonData):
         self.deleteWindow()
         self.widgets = {}
         
@@ -188,9 +187,8 @@ class Desktop(tk.Frame):
         self.widgets['weak2'].grid(row=5, column=1, padx=5, pady=5)
         
         self.widgets['listbox'] = tk.Listbox(self.widgets['frame1'], height=7, width=25)
-        seasonData = self.program.getUserSeasons()
         if seasonData is not None:
-            for season in self.seasonData:
+            for season in seasonData:
                 self.widgets['listbox'].insert(tk.END, text=season['id'], values=season['year'])
         self.widgets['listbox'].grid(row=0, column=1, rowspan=4)
         
@@ -298,28 +296,28 @@ class Desktop(tk.Frame):
             
             self.widgets['cancel'] = tk.Button(self.widgets['frame1'], text='Cancel', height=2, width=11)
             self.widgets['cancel'].grid(row=1, column=1, sticky='E', padx=5, pady=5)
-            self.widgets['cancel'].bind('<Button-1>', backToUserDataView)
+            self.widgets['cancel'].bind('<Button-1>', self.backToUserDataView)
         
         def displayPlans(back=True):
             if back:
                 if self.widgets['listbox'].curselection():
-                    self.season_id = self.seasonData[self.widgets['listbox'].curselection()[0]]['id']
-                    self.seasonYear = self.seasonData[self.widgets['listbox'].curselection()[0]]['year']
-                    self.displaySeasonPlans()
+                    self.program.getSeasonPlans(seasonData[self.widgets['listbox'].curselection()[0]]['id'])
             else:
-                self.displaySeasonPlans()   
+                self.program.getSeasonPlans() 
              
         def deleteSeason(event):
             self.run = False
             if self.widgets['listbox'].curselection():
-                season_id = self.seasonData[self.widgets['listbox'].curselection()[0]]['id']    
+                season_id = seasonData[self.widgets['listbox'].curselection()[0]]['id']    
                 if self.program.deleteSeason(season_id):
                     self.displayUserData(self.program.showUserData(self.program.activeUser))
     
         def newRaceWindow(event, season_id=0, errordata=''):
             if season_id or self.widgets['listbox'].curselection(): 
-                if season_id == 0:
-                    self.season = self.seasonData[self.widgets['listbox'].curselection()[0]]['id']
+                #===============================================================
+                # if season_id == 0:
+                #     self.season = seasonData[self.widgets['listbox'].curselection()[0]]['id']
+                #===============================================================
                 self.run = False
                 self.deleteWindow()
                 self.widgets = {}  
@@ -371,7 +369,7 @@ class Desktop(tk.Frame):
                 
                 self.widgets['createSeason'] = tk.Button(self.widgets['frame2'], text='Create\nnew race', height=2, width=11)
                 self.widgets['createSeason'].grid(row=1, column=0, sticky='E', padx=5, pady=5)
-                self.widgets['createSeason'].bind('<Button-1>', self.createRace)
+                self.widgets['createSeason'].bind('<Button-1>', createRace)
                 
                 self.widgets['cancel'] = tk.Button(self.widgets['frame2'], text='Cancel', height=2, width=11)
                 self.widgets['cancel'].grid(row=1, column=1, sticky='E', padx=5, pady=5)
@@ -379,43 +377,27 @@ class Desktop(tk.Frame):
     
         def createSeason(event):
             self.run = False
-            if self.program.createSeason(int(self.widgets['year'].get()), self.program.activeUser):
-                self.displayUserData(self.program.showUserData(self.program.activeUser))
-            else:
-                self.messageBox("Season creation error", "This season already exists!")
+            self.program.createSeason(int(self.widgets['year'].get()))
     
         def createRace(event):
             self.run = False
-            name = self.widgets['name'].get()
-            date = datetime.date(int(self.widgets['year'].get())+2000, int(self.widgets['month'].get()), int(self.widgets['day'].get()))
-            priority = int(self.widgets['priority'].get())
-            time = datetime.time(int(self.widgets['hour'].get()), int(self.widgets['minute'].get()))
-            season_id = self.season
-            
-            result = self.program.createRace(name, date, priority, time, season_id)
-            if result == []:
-                self.displayUserData(self.program.showUserData(self.program.activeUser))
-            else:
-                self.messageBox("Race creation error", "Race was not added:\nInput data were probably wrong")
-                self.newRaceWindow(1, self.season, errordata=result)
+            self.program.createRace(self.widgets['name'].get(), self.widgets['year'].get(), 
+                                    self.widgets['month'].get(), self.widgets['day'].get(), 
+                                    self.widgets['priority'].get(), self.widgets['hour'].get(),
+                                    self.widgets['minute'].get())
        
-        def backToUserDataView(self, event):
-            self.displayUserData(self.userData)
-        
         self.selectedSeason = ()
         displayRaces()
     
-    def displaySeasonPlans(self):
+    def displaySeasonPlans(self, seasonPlans, seasonYear):
         self.run = False
         self.deleteWindow()
         self.widgets = {}
         
-        self.planData = self.program.getSeasonPlans(self.season_id)
-        
         self.widgets['frame1'] = tk.Frame(self)
         self.widgets['frame1'].grid(rowspan=1, columnspan=2, padx=5, pady=5)
         
-        self.widgets['seasonYearLabel'] = tk.Label(self.widgets['frame1'], text='Season: {}'.format(self.seasonYear))
+        self.widgets['seasonYearLabel'] = tk.Label(self.widgets['frame1'], text='Season: {}'.format(seasonYear))
         self.widgets['seasonYearLabel'].grid(columnspan=2, padx=5, pady=5)
         
         self.widgets['frame2'] = tk.Frame(self)
@@ -432,10 +414,9 @@ class Desktop(tk.Frame):
         self.widgets['tree'].heading("typeOfPlan", text="Type of plan")
         self.widgets['tree'].heading("planStart", text="Start of plan")
         self.widgets['tree'].heading("planEnd", text="End of plan")
-
         
-        if self.planData is not None:
-            for plan in self.planData:
+        if seasonPlans is not None:
+            for plan in seasonPlans:
                 self.widgets['tree'].insert("", 'end', text=plan['id'], values=(plan['annualHours'], plan['typeOfPlan'], plan['planStart'], plan['planEnd']))
             self.widgets['tree'].pack()
         
@@ -444,15 +425,15 @@ class Desktop(tk.Frame):
         
         self.widgets['newPlan'] = tk.Button(self.widgets['frame3'], text='New plan', height=2, width=10)
         self.widgets['newPlan'].grid(row=0, column=0, sticky='E', padx=5, pady=5)
-        self.widgets['newPlan'].bind('<Button-1>', self.newPlan)
+        self.widgets['newPlan'].bind('<Button-1>', self.newPlanWindow)
         
         self.widgets['openPlan'] = tk.Button(self.widgets['frame3'], text='Open plan', height=2, width=10)
         self.widgets['openPlan'].grid(row=0, column=1, sticky='E', padx=5, pady=5)
-        self.widgets['openPlan'].bind('<Button-1>', self.showPlan)
+        self.widgets['openPlan'].bind('<Button-1>', showPlan)
         
         self.widgets['deletePlan'] = tk.Button(self.widgets['frame3'], text='Delete plan', height=2, width=10)
         self.widgets['deletePlan'].grid(row=0, column=2, sticky='E', padx=5, pady=5)
-        self.widgets['deletePlan'].bind('<Button-1>', self.deletePlan)
+        self.widgets['deletePlan'].bind('<Button-1>', deletePlan)
         
         self.widgets['back'] = tk.Button(self.widgets['frame3'], text='Back', height=2, width=10)
         self.widgets['back'].grid(row=0, column=3, sticky='E', padx=5, pady=5)
@@ -461,11 +442,20 @@ class Desktop(tk.Frame):
         self.widgets['quit'] = tk.Button(self.widgets['frame3'], text='Quit', height=2, width=11)
         self.widgets['quit'].grid(row=0, column=4, sticky='E', padx=5, pady=5)
         self.widgets['quit'].bind('<Button-1>', self.quitApp)
+        
+                
+        def showPlan(event):
+            selectedItem = self.widgets['tree'].focus()
+            if self.widgets['tree'].item(selectedItem)['values'] != '':
+                self.program.showPlan(self.widgets['tree'].item(selectedItem)['text'],
+                                      self.widgets['tree'].item(selectedItem)['values'])   
+                  
+        def deletePlan(event):
+            selectedItem = self.widgets['tree'].focus()
+            if self.widgets['tree'].item(selectedItem)['values'] != '':
+                self.program.deletePlan(self.widgets['tree'].item(selectedItem)['text'])
 
-    def newPlan(self, event):
-        self.newPlanWindow()
-
-    def newPlanWindow(self, errordata=''):
+    def newPlanWindow(self, event, errordata=''):
         self.run = False
         self.deleteWindow()
         self.widgets = {}  
@@ -526,33 +516,17 @@ class Desktop(tk.Frame):
           
         self.widgets['createPlan'] = tk.Button(self.widgets['frame2'], text='Create\nnew plan', height=2, width=11)
         self.widgets['createPlan'].grid(row=1, column=0, sticky='E', padx=5, pady=5)
-        self.widgets['createPlan'].bind('<Button-1>', self.createPlan)
+        self.widgets['createPlan'].bind('<Button-1>', createPlan)
           
         self.widgets['cancel'] = tk.Button(self.widgets['frame2'], text='Cancel', height=2, width=11)
         self.widgets['cancel'].grid(row=1, column=1, sticky='E', padx=5, pady=5)
         self.widgets['cancel'].bind('<Button-1>', self.backToDisplayPlans) 
 
-    def createPlan(self, event):
-        annualHours = int(self.widgets['annualHours'].get())
-        startDate = datetime.date(int(self.widgets['startYear'].get())+2000, int(self.widgets['startMonth'].get()), int(self.widgets['startDay'].get()))        
-        endDate = datetime.date(int(self.widgets['endYear'].get())+2000, int(self.widgets['endMonth'].get()), int(self.widgets['endDay'].get()))
-        if self.typeOfPlan.get() == 1:
-            typeOfPlan = 'normal'
-        else:
-            typeOfPlan = 'reversed' 
-        result = self.program.createPlan(annualHours, self.season_id, typeOfPlan, startDate, endDate, self.program.activeUser)
-        if result == []:
-            self.displaySeasonPlans()
-        else:
-            self.newPlanWindow(result)  
-        
-    def showPlan(self, event):
-        selectedItem = self.widgets['tree'].focus()
-        if self.widgets['tree'].item(selectedItem)['values'] != '':
-            self.planViewData = self.program.showPlan(self.widgets['tree'].item(selectedItem)['text'])
-            self.showPlanWindow(self.planViewData, self.widgets['tree'].item(selectedItem)['values'])
-            self.plan_id = self.widgets['tree'].item(selectedItem)['text']
-        
+        def createPlan(event):
+            self.program.createPlan(self.widgets['annualHours'].get(), self.typeOfPlan.get(), 
+                                    self.widgets['startYear'].get(), self.widgets['startMonth'].get(), self.widgets['startDay'].get(),
+                                    self.widgets['endYear'].get(), self.widgets['endMonth'].get(), self.widgets['endDay'].get())
+
     def showPlanWindow(self, data, planInfo):
         self.run = False
         self.deleteWindow()
@@ -606,23 +580,16 @@ class Desktop(tk.Frame):
         self.widgets['tree'].heading('aEndurance', text="AE")
         self.widgets['tree'].heading('maxPower', text="MP")
         self.widgets['tree'].heading("test", text="Test")
-        
-        def convert(value):
-            if value == 1:
-                return 'X'
-            else:
-                return ' '
+
         
         if data is not None:
             for week in data:
-                if week['races'] is None:
-                    week['races'] = ''
                 self.widgets['tree'].insert("", 'end', text=week['id'], values=(week['week'], week['monday'], 
-                                            week['period'][:-2], week['weeklyHours'], week['races'], convert(week['gym']), 
-                                            convert(week['endurance']), convert(week['force']), convert(week['speedSkills']), 
-                                            convert(week['eForce']), convert(week['aEndurance']), convert(week['maxPower']), 
-                                            convert(week['test'])))
-            self.widgets['tree'].pack()
+                                            week['period'][:-2], week['weeklyHours'], week['races'], week['gym'], 
+                                            week['endurance'], week['force'], week['speedSkills'], 
+                                            week['eForce'], week['aEndurance'], week['maxPower'], 
+                                            week['test']))
+        self.widgets['tree'].pack()
 
         self.widgets['frame3'] = tk.Frame(self)
         self.widgets['frame3'].grid(row=27, rowspan=2, columnspan=4, padx=5, pady=5)
@@ -642,12 +609,7 @@ class Desktop(tk.Frame):
                 
     def backToDisplayPlans(self, event):
         self.displayPlans(1, False)
-            
-    def deletePlan(self, event):
-        selectedItem = self.widgets['tree'].focus()
-        if self.widgets['tree'].item(selectedItem)['values'] != '':
-            self.program.deletePlan(self.widgets['tree'].item(selectedItem)['text'])
-            self.displaySeasonPlans()
+
             
     def delTree(self):
         for row in self.widgets['tree'].get_children():
@@ -660,6 +622,9 @@ class Desktop(tk.Frame):
             except:
                 pass
         self.widgets = {}
+        
+    def backToUserDataView(self, event):
+        self.program.loadUser()
         
     def messageBox(self, title, body):
         self.widgets['failMesage'] = messagebox.showinfo(title, body)

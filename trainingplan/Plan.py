@@ -7,7 +7,7 @@ class Plan:
     def __init__(self, id=0):
         self.id = id
         
-    def createPlan(self, annualHours, season, typeOfPlan, planStart, planEnd, activeUser, age, seasonID, id=0):
+    def createPlan(self, annualHours, season, typeOfPlan, planStart, planEnd, activeUser, age, id=0):
         wrongdata = []
         if not self.setAnnualHours(annualHours):
             wrongdata.append('annual hours')
@@ -40,10 +40,10 @@ class Plan:
             conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
             a=conn.cursor()
             add_plan = ("INSERT INTO tp_plan VALUES (%s, %s, %s, %s, %s, %s)")
-            data_plan = (id, annualHours, typeOfPlan, planStart, planEnd, seasonID)
+            data_plan = (id, annualHours, typeOfPlan, planStart, planEnd, season)
             a.execute(add_plan, data_plan)
             conn.commit()
-            get_id = ("SELECT id FROM tp_plan WHERE annualHours={} AND season_id={}".format(annualHours, seasonID))
+            get_id = ("SELECT id FROM tp_plan WHERE annualHours={} AND season_id={}".format(annualHours, season))
             a.execute(get_id)
             planID = a.fetchone()
             planID = planID['id']

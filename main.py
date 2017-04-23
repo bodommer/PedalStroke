@@ -19,12 +19,14 @@ class Program:
         
     def createUser(self, name, age, cp60, maxHR, yearsOfExperience, strong1, strong2, weak1, weak2, id=0):
         self.activeUser = User(id)
-        self.activeUser = self.activeUser.createUser(name, age, cp60, maxHR, yearsOfExperience, strong1, strong2, weak1, weak2, id)
+        self.activeUser.createUser(name, age, cp60, maxHR, yearsOfExperience, strong1, strong2, weak1, weak2, id)
         if type(self.activeUser.errordata) == str:
             self.gui.newUserWindow(self.activeUser.errordata)
             self.gui.messageBox('Wrong data', 'Some of the data you entered were in a wrong format!')
         else:
-            self.gui.displayUserData({'name': name, 'age':age, 'cp60':cp60, 'maxHR':maxHR, 'yearsOfExperience':yearsOfExperience, 'strong1':strong1, 'strong2':strong2, 'weak1':weak1, 'weak2':weak2})
+            self.gui.displayUserData({'name': self.activeUser.getName(), 'age':self.activeUser.getAge(), 'cp60':self.activeUser.getcp60(), 'maxHR':self.activeUser.getmaxHR(), 
+                                      'yearsOfExperience':self.activeUser.getYearsOfExperience(), 'strong1':self.activeUser.getStrong1(), 'strong2':self.activeUser.getStrong2(), 
+                                      'weak1':self.activeUser.getWeak1(), 'weak2':self.activeUser.getWeak2()}, self.getUserSeasons())
             
     def chosenUser(self, selected):
         if selected == 'Create user':
@@ -36,6 +38,9 @@ class Program:
                     break
             self.loadUser(activeUser)
 
+    def chooseUser(self):
+        self.activeUser = None
+        self.gui.chooseUser(self.getListOfUsers())
         
     def loadUser(self, user_id=0):
         if self.activeUser is None:
@@ -75,31 +80,31 @@ class Program:
 
     def deleteUser(self):
         if self.activeUser.deleteUser():
-            self.gui.chooseUser()
+            self.gui.chooseUser(self.getListOfUsers())
         else:
             self.gui.messageBox("Delete user error", "User was not deleted")
     
     def createSeason(self, year, id=0):
         self.activeSeason = Season(id)
-        self.activeSeason.createSeason(year, self.activeUser.id)
+        self.activeSeason.createSeason(int(year), self.activeUser.id)
         if self.activeSeason.errordata == []:
             self.getSeasonPlans()
         else:
             self.gui.displayUserData({'name': self.activeUser.getName(), 'age':self.activeUser.getAge(), 'cp60':self.activeUser.getcp60(), 'maxHR':self.activeUser.getmaxHR(), 
                                       'yearsOfExperience':self.activeUser.getYearsOfExperience(), 'strong1':self.activeUser.getStrong1(), 'strong2':self.activeUser.getStrong2(), 
                                       'weak1':self.activeUser.getWeak1(), 'weak2':self.activeUser.getWeak2()}, self.getUserSeasons())
-            self.gui.messageBox("Season creation error", "This season already exists!")
+            if self.activeSeason.errordata[0] == ['already exists']:
+                self.gui.messageBox("Season creation error", "This season already exists!")
+            else:
+                self.gui.messageBox("Season creation error", "Year is in the past or in far future!")                
     
     def getSeasonRaces(self, season_id):
-        if season_id != self.activeSeason.id:
-            season = Season(season_id)
-            data = season.getSeasonRaces()
-        else:
-            data = self.activeSeason.getSeasonRaces()
-        #zavola funnkciu na zobrazovanie 
+        season = Season(season_id)
+        data = season.getSeasonRaces()
+        return data
         
     def getSeasonPlans(self, season_id=0):
-        if self.activeSeason is None and not season_id:
+        if self.activeSeason is None:
             self.activeSeason = Season(season_id)
             self.activeSeason.loadSeason()
         if self.activeSeason.errordata == []:
@@ -110,19 +115,20 @@ class Program:
                                       'weak1':self.activeUser.getWeak1(), 'weak2':self.activeUser.getWeak2()}, self.getUserSeasons())
             self.gui.messageBox("Season loading error", "Something went wrong!")
         
-    def deleteSeason(self, season_id):
-        self.activeUser.deleteSeason(season_id)
+    def deleteSeason(self, season_year):
+        self.activeUser.deleteSeason(season_year)
         self.activeSeason = None
-        #znovu nacitat user hub
+        self.gui.displayUserData({'name': self.activeUser.getName(), 'age':self.activeUser.getAge(), 'cp60':self.activeUser.getcp60(), 'maxHR':self.activeUser.getmaxHR(), 
+                                  'yearsOfExperience':self.activeUser.getYearsOfExperience(), 'strong1':self.activeUser.getStrong1(), 'strong2':self.activeUser.getStrong2(), 
+                                  'weak1':self.activeUser.getWeak1(), 'weak2':self.activeUser.getWeak2()}, self.getUserSeasons())
 
-    def createRace(self, name, year, month, day, priority, hour, minute, id=0):
-        name = self.widgets['name'].get()
+    def createRace(self, name, year, month, day, priority, hour, minute, seasonID):
         date = datetime.date(int(year)+2000, int(month), int(day))
         priority = int(priority)
         time = datetime.time(int(hour), int(minute))
-        season_id = self.activeSeason.id
+        #season_id = self.activeUser.getSeasonID(seasonYear)
         race = Race(id)
-        race.createRace(name, date, priority, time, season_id)
+        race.createRace(name, date, priority, time, seasonID)
         
         if race.errordata == []:
             self.gui.displayUserData({'name': self.activeUser.getName(), 'age':self.activeUser.getAge(), 'cp60':self.activeUser.getcp60(), 'maxHR':self.activeUser.getmaxHR(), 
@@ -170,8 +176,9 @@ class Program:
             for week in data:
                 if week['races'] is None:
                     week['races'] = ''
-                for prop in ('gym', 'endurance', 'force', 'speedSkills', 'eForce',
+                for prop in ('endurance', 'force', 'speedSkills', 'eForce',
                                  'aEndurance', 'maxPower', 'test'):
+                    print(week[prop])
                     week[prop] = convert(week[prop])
                     
         self.gui.showPlanWindow(data, planInfo) #zavola metodu na zobrazenie plan hubu

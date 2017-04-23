@@ -143,7 +143,7 @@ class User:
             data_user = (id, cp60, maxHR, name, strong1, strong2, weak1, weak2, yearsOfExperience, age)
             a.execute(add_user, data_user)
             conn.commit()
-            get_user_id = ("SELECT id FROM tp_season WHERE name={}".format(name))
+            get_user_id = ("SELECT id FROM tp_user WHERE name='{}'".format(name))
             a.execute(get_user_id)
             self.id = a.fetchone()['id']
             conn.close()
@@ -163,7 +163,7 @@ class User:
         self.setName(data['name'])
         self.setcp60(data['cp60'])
         self.setmaxHR(data['maxHR'])
-        self.setStrong1(data['storng1'])
+        self.setStrong1(data['strong1'])
         self.setStrong2(data['strong2'])
         self.setWeak1(data['weak1'])
         self.setWeak2(data['weak2'])
@@ -180,10 +180,20 @@ class User:
         conn.close() 
         return data
     
-    def deleteSeason(self, season_id):
+    def getSeasonID(self, year):
         conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
         a=conn.cursor()
-        delete_season = ("DELETE FROM tp_season WHERE id={} AND user_ID={}".format(season_id, self.id))
+        get_season_id = ("SELECT id FROM tp_season WHERE user_id={} AND year={}".format(self.id, year))
+        a.execute(get_season_id)
+        data = a.fetchone()
+        a.close()
+        conn.close()
+        return data['id']
+    
+    def deleteSeason(self, season_year):
+        conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
+        a=conn.cursor()
+        delete_season = ("DELETE FROM tp_season WHERE year={} AND user_ID={}".format(season_year, self.id))
         a.execute(delete_season)
         conn.commit()
         a.close()

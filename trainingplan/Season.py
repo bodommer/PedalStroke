@@ -44,7 +44,7 @@ class Season:
         #pridat do databazy pretekov danej sezony
         race = Race(id)
 
-    def createSeason(self, year, userID=0): # vytvori sezonu - prida do databazy
+    def createSeason(self, year, userID=0, id=0): # vytvori sezonu - prida do databazy
         self.errordata = self.setYear(year, userID)
         if self.errordata != []:
             return
@@ -69,11 +69,12 @@ class Season:
         a.close()
         conn.close()
         self.year = data['year']
+        self.errordata = []
         
     def getPlans(self): ## vrati zoznam planov danej sezony
         conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
         a=conn.cursor()
-        get_season = ("SELECT * FROM tp_plan WHERE season_id={} ORDER BY year ASC".format(self.id))
+        get_season = ("SELECT * FROM tp_plan WHERE season_id={} ORDER BY planStart ASC".format(self.id))
         a.execute(get_season)
         data = a.fetchall()
         a.close()
@@ -201,6 +202,6 @@ class Race:
             a.close()
             conn.close()    
         else:
-            self.errordata = ', '.join(errordata)
+            self.errordata = ', '.join(self.errordata)
 
         

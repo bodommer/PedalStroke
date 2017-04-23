@@ -141,19 +141,19 @@ class Graph(tk.Canvas):
                         text='Week: {}\nPeriod: {}\nHours: {}\nMonday: {}\nTraining:'.format(wk['week'], wk['period'][:-2], wk['weeklyHours'], monday)
                         if wk['gym']:
                             text += ' Gym:{}'.format(wk['gym'])                    
-                        if wk['endurance']:
+                        if wk['endurance'] != ' ':
                             text += ' EN'
-                        if wk['force']:
+                        if wk['force'] != ' ':
                             text += ' FO'
-                        if wk['speedSkills']:
+                        if wk['speedSkills'] != ' ':
                             text += ' SpS'
-                        if wk['eForce']:
+                        if wk['eForce'] != ' ':
                             text += ' EF'
-                        if wk['aEndurance']:
+                        if wk['aEndurance'] != ' ':
                             text += ' AE'
-                        if wk['maxPower']:
+                        if wk['maxPower'] != ' ':
                             text += ' MP'
-                        if wk['test']:
+                        if wk['test'] != ' ':
                             text += ' TEST'
                         if not self.text:
                             self.text = self.create_text(x+3, y-77, anchor='nw', text=text)

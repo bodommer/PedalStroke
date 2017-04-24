@@ -87,16 +87,13 @@ class Program:
     def createSeason(self, year, id=0):
         self.activeSeason = Season(id)
         self.activeSeason.createSeason(int(year), self.activeUser.id)
-        if self.activeSeason.errordata == []:
-            self.getSeasonPlans()
+        self.gui.displayUserData({'name': self.activeUser.getName(), 'age':self.activeUser.getAge(), 'cp60':self.activeUser.getcp60(), 'maxHR':self.activeUser.getmaxHR(), 
+                                  'yearsOfExperience':self.activeUser.getYearsOfExperience(), 'strong1':self.activeUser.getStrong1(), 'strong2':self.activeUser.getStrong2(), 
+                                  'weak1':self.activeUser.getWeak1(), 'weak2':self.activeUser.getWeak2()}, self.getUserSeasons())
+        if self.activeSeason.errordata[0] == ['already exists']:
+            self.gui.messageBox("Season creation error", "This season already exists!")
         else:
-            self.gui.displayUserData({'name': self.activeUser.getName(), 'age':self.activeUser.getAge(), 'cp60':self.activeUser.getcp60(), 'maxHR':self.activeUser.getmaxHR(), 
-                                      'yearsOfExperience':self.activeUser.getYearsOfExperience(), 'strong1':self.activeUser.getStrong1(), 'strong2':self.activeUser.getStrong2(), 
-                                      'weak1':self.activeUser.getWeak1(), 'weak2':self.activeUser.getWeak2()}, self.getUserSeasons())
-            if self.activeSeason.errordata[0] == ['already exists']:
-                self.gui.messageBox("Season creation error", "This season already exists!")
-            else:
-                self.gui.messageBox("Season creation error", "Year is in the past or in far future!")                
+            self.gui.messageBox("Season creation error", "Year is in the past or in far future!")                
     
     def getSeasonRaces(self, season_id):
         season = Season(season_id)
@@ -178,7 +175,6 @@ class Program:
                     week['races'] = ''
                 for prop in ('endurance', 'force', 'speedSkills', 'eForce',
                                  'aEndurance', 'maxPower', 'test'):
-                    print(week[prop])
                     week[prop] = convert(week[prop])
                     
         self.gui.showPlanWindow(data, planInfo) #zavola metodu na zobrazenie plan hubu

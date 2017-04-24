@@ -140,7 +140,7 @@ class Graph(tk.Canvas):
                         monday = '{}/{}'.format(wk['monday'].day, wk['monday'].month)
                         text='Week: {}\nPeriod: {}\nHours: {}\nMonday: {}\nTraining:'.format(wk['week'], wk['period'][:-2], wk['weeklyHours'], monday)
                         if wk['gym']:
-                            text += ' Gym:{}'.format(wk['gym'])                    
+                            text += ' Gym: {}'.format(wk['gym'])                    
                         if wk['endurance'] != ' ':
                             text += ' EN'
                         if wk['force'] != ' ':

@@ -8,18 +8,18 @@ class Plan:
         self.id = id
         
     def createPlan(self, annualHours, season, typeOfPlan, planStart, planEnd, activeUser, age, id=0):
-        wrongdata = []
+        errordata = []
         if not self.setAnnualHours(annualHours):
-            wrongdata.append('annual hours')
+            errordata.append('annual hours')
         if not self.setTypeOfPlan(typeOfPlan):
-            wrongdata.append('type of plan')
+            errordata.append('type of plan')
         if not self.setPlanStart(planStart):
-            wrongdata.append('start of plan - must be monday')
+            errordata.append('start of plan - must be monday')
         if not self.setPlanEnd(planEnd):
-            wrongdata.append('end of plan')
-        if wrongdata != []:
-            wrongdata = ', '.join(wrongdata)
-            self.wrongdata = wrongdata
+            errordata.append('end of plan')
+        if errordata != []:
+            errordata = ', '.join(errordata)
+            self.errordata = errordata
             return
         weeksCount = (self.planEnd - self.planStart).days // 7 + 1      #spocita ake dlhe je obdobie
         planWeeks = self.createPlanWeeks(weeksCount, season)     #vytvori treningove tyzdne - urci tyzden + pondelok, priradi tyzdnom zoznam pretekov
@@ -34,9 +34,9 @@ class Plan:
         self.planWeeks = planWeeks
         self.setAllRaces(season)
         self.correct = True
-        self.wrongdata = wrongdata
+        self.errordata = errordata
         # po dokonceni vytvarania planu zacne ukladat data do databazy (ak vsetko prebehlo v poriadku a spravne)
-        if self.wrongdata == []:
+        if self.errordata == []:
             conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)
             a=conn.cursor()
             add_plan = ("INSERT INTO tp_plan VALUES (%s, %s, %s, %s, %s, %s)")

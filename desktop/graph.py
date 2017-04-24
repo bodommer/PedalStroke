@@ -20,7 +20,8 @@ class Graph(tk.Canvas):
         self.create_rectangle(0, 299, 599, 549, outline='grey')
         self.create_text(127, 12, text='Training weeks overview', font='Arial 16 bold')
         self.create_text(143, 287, text='Form, condition and fatigue', font='Arial 16 bold')
-        column_width = 600//(1+len(data))
+        column_width = 590//(len(data))
+        extra = (590 - (len(data))*column_width)//2
         # kreslenie grafov
         max_hrs = 0
         self.create_line(5, 250, 594, 250)
@@ -32,11 +33,11 @@ class Graph(tk.Canvas):
 
         for week in data:
             height = int(round(column_height*week['weeklyHours']))
-            self.create_rectangle(1+(column_width//2+(week['week']-1)*column_width), 250-height, (column_width//2+week['week']*column_width)-1, 250, fill='skyblue', activefill='yellow')
-            self.xCoords.append((1+(column_width//2+(week['week']-1)*column_width), (column_width//2+week['week']*column_width)-1))
+            self.create_rectangle(6+extra+(week['week']-1)*column_width, 250-height, extra+week['week']*column_width+4, 250, fill='skyblue', activefill='yellow')
+            self.xCoords.append((1+extra+(week['week']-1)*column_width, extra+week['week']*column_width-1))
             self.yCoords.append(250-height)
-            self.create_text(week['week']*column_width, 262, text=week['week'])
-            self.create_text(week['week']*column_width, 537, text=week['week'])
+            self.create_text(6+extra+(week['week'])*column_width-column_width//2, 262, text=week['week'])
+            self.create_text(6+extra+(week['week'])*column_width-column_width//2, 537, text=week['week'])
 
         koeficienty = {
         'Preparatory-1': {'C': 1.02,'F': -0.02, 'T': 0.02}, 
@@ -83,26 +84,25 @@ class Graph(tk.Canvas):
             cy *= k['C']
             fy += k['F']
             ty += k['T']
-            column_width//2+(week['week']-1)*column_width, 250-height, column_width//2+week['week']*column_width, 250
-
+            #column_width//2+(week['week']-1)*column_width, 250-height, column_width//2+week['week']*column_width, 250
 
             cy = min(1, cy)
             cy = max(0, cy)
             if w_no != 1:
-                self.create_line((w_no-1)*column_width, 525-cy_old*y_max, (w_no)*column_width, 525-cy*y_max, fill='skyblue')
-            self.cPoints.append(self.create_oval((w_no)*column_width-4, 525-cy*y_max-4, (w_no)*column_width+4, 525-cy*y_max+4, fill='navy', outline='navy'))
+                self.create_line(5+extra+(w_no-1)*column_width-column_width//2, 525-cy_old*y_max, 5+extra+(w_no)*column_width-column_width//2, 525-cy*y_max, fill='skyblue')
+            self.cPoints.append(self.create_oval(5+extra+(w_no)*column_width-column_width//2-4, 525-cy*y_max-4, 5+extra+(w_no)*column_width-column_width//2+4, 525-cy*y_max+4, fill='navy', outline='navy'))
 
             fy = min(1, fy)
             fy = max(0, fy)
             if w_no != 1:
-                self.create_line((w_no-1)*column_width, 525-fy_old*y_max, (w_no)*column_width, 525-fy*y_max, fill='pink')
-            self.fPoints.append(self.create_oval((w_no)*column_width-4, 525-fy*y_max-4, (w_no)*column_width+4, 525-fy*y_max+4, fill='red', outline='red'))
+                self.create_line(5+extra+(w_no-1)*column_width-column_width//2, 525-fy_old*y_max, 5+extra+(w_no)*column_width-column_width//2, 525-fy*y_max, fill='pink')
+            self.fPoints.append(self.create_oval(5+extra+(w_no)*column_width-column_width//2-4, 525-fy*y_max-4, 5+extra+(w_no)*column_width-column_width//2+4, 525-fy*y_max+4, fill='red', outline='red'))
 
             ty = min(1, ty)
             ty = max(0, ty)
             if w_no != 1:
-                self.create_line((w_no-1)*column_width, 525-ty_old*y_max, (w_no)*column_width, 525-ty*y_max, fill='limegreen')
-            self.tPoints.append(self.create_oval((w_no)*column_width-4, 525-ty*y_max-4, (w_no)*column_width+4, 525-ty*y_max+4, fill='green', outline='green'))
+                self.create_line(5+extra+(w_no-1)*column_width-column_width//2, 525-ty_old*y_max, 5+extra+(w_no)*column_width-column_width//2, 525-ty*y_max, fill='limegreen')
+            self.tPoints.append(self.create_oval(5+extra+(w_no)*column_width-column_width//2-4, 525-ty*y_max-4, 5+extra+(w_no)*column_width-column_width//2+4, 525-ty*y_max+4, fill='green', outline='green'))
 
             cy_old, fy_old, ty_old = cy, fy, ty
         for item in self.cPoints:

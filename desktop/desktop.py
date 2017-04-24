@@ -52,13 +52,13 @@ class Desktop(tk.Frame):
 #         self.widgets['scrollbar'].config(command=self.widgets['listbox'].yview)
 #===============================================================================
             
-        self.widgets['confirm'] = tk.Button(self, text='Confirm')
+        self.widgets['confirm'] = tk.Button(self, text='Ok')
         self.widgets['confirm'].grid(row=4, sticky='W', padx=5, pady=5)
         self.widgets['confirm'].bind('<Button-1>', chosenUser)        
         
-        self.widgets['quit'] = tk.Button(self, text='Quit')
-        self.widgets['quit'].grid(row=4, sticky='E', padx=5, pady=5)
-        self.widgets['quit'].bind('<Button-1>', self.quitApp)
+        self.widgets['Exit'] = tk.Button(self, text='Exit')
+        self.widgets['Exit'].grid(row=4, sticky='E', padx=5, pady=5)
+        self.widgets['Exit'].bind('<Button-1>', self.exitApp)
 
 
     def newUserWindow(self, wrongdata=''):
@@ -141,11 +141,11 @@ class Desktop(tk.Frame):
         self.widgets['confirm'].grid(row=15, sticky='W', padx=5, pady=5)
         self.widgets['confirm'].bind('<Button-1>', createUser)        
         
-        self.widgets['quit'] = tk.Button(self, text='Quit', height=2, width=7)
-        self.widgets['quit'].grid(row=15, column=4, sticky='E', padx=5, pady=5)
-        self.widgets['quit'].bind('<Button-1>', self.quitApp)
+        self.widgets['Exit'] = tk.Button(self, text='Exit', height=2, width=7)
+        self.widgets['Exit'].grid(row=15, column=4, sticky='E', padx=5, pady=5)
+        self.widgets['Exit'].bind('<Button-1>', self.exitApp)
         
-    def displayUserData(self, data, seasonData):
+    def displayUserData(self, data, seasonData, startData):
         self.deleteWindow()
         self.widgets = {}
         
@@ -176,7 +176,7 @@ class Desktop(tk.Frame):
         
             self.widgets['yearLabel'] = tk.Label(self.widgets['frame1'], text='Select the year of season: ')
             self.widgets['yearLabel'].grid(row=0, padx=5, pady=5)
-            self.widgets['year'] = tk.Spinbox(self.widgets['frame1'], from_=2015, to=2050, increment=1, justify='center', relief='flat')
+            self.widgets['year'] = tk.Spinbox(self.widgets['frame1'], from_=startData[2]+2000, to=startData[2]+2070, increment=1, justify='center', relief='flat')
             self.widgets['year'].grid(row=0, column=1, padx=5, pady=5)  
             
             self.widgets['createSeason'] = tk.Button(self.widgets['frame1'], text='Create\nnew season', height=2, width=11)
@@ -235,15 +235,27 @@ class Desktop(tk.Frame):
                 
                 self.widgets['datelabel'] = tk.Label(self.widgets['frame1'], text='Race date (dd.mm.yy): ')
                 self.widgets['datelabel'].grid(row=1, pady=5)
-                self.widgets['day'] = tk.Spinbox(self.widgets['frame1'], from_=1, to=31, increment=1, justify='center', relief='flat', width=2)
+                
+                self.startDay = tk.StringVar(self)
+                self.startDay.set(startData[0])
+
+                self.widgets['day'] = tk.Spinbox(self.widgets['frame1'], from_=1, to=31, increment=1, justify='center', relief='flat', width=2, textvariable=self.startDay)
                 self.widgets['day'].grid(row=1, column=1) 
                 self.widgets['dotLabel'] = tk.Label(self.widgets['frame1'], text='.', width=1)
-                self.widgets['dotLabel'].grid(row=1, column=2)  
-                self.widgets['month'] = tk.Spinbox(self.widgets['frame1'], from_=1, to=12, increment=1, justify='center', relief='flat', width=2)
+                self.widgets['dotLabel'].grid(row=1, column=2)
+                  
+                self.startMonth = tk.StringVar(self)
+                self.startMonth.set(startData[1])
+                
+                self.widgets['month'] = tk.Spinbox(self.widgets['frame1'], from_=1, to=12, increment=1, justify='center', relief='flat', width=2, textvariable=self.startMonth)
                 self.widgets['month'].grid(row=1, column=3) 
                 self.widgets['dot2Label'] = tk.Label(self.widgets['frame1'], text='.', width=1)
                 self.widgets['dot2Label'].grid(row=1, column=4)     
-                self.widgets['year'] = tk.Spinbox(self.widgets['frame1'], from_=15, to=50, increment=1, justify='center', relief='flat', width=2)
+                
+                self.startYear = tk.StringVar(self)
+                self.startYear.set(startData[2])
+                
+                self.widgets['year'] = tk.Spinbox(self.widgets['frame1'], from_=startData[2], to=startData[2]+70, increment=1, justify='center', relief='flat', width=2, textvariable=self.startYear)
                 self.widgets['year'].grid(row=1, column=5)         
             
                 self.widgets['prioritylabel'] = tk.Label(self.widgets['frame1'], text='Race priority: ')
@@ -257,15 +269,15 @@ class Desktop(tk.Frame):
                 self.widgets['hour'].grid(row=3, column=1) 
                 self.widgets['colonLabel'] = tk.Label(self.widgets['frame1'], text=':', width=1)
                 self.widgets['colonLabel'].grid(row=3, column=2)  
-                self.widgets['minute'] = tk.Spinbox(self.widgets['frame1'], from_=0, to=59, increment=1, justify='center', relief='flat', width=2)
+                self.widgets['minute'] = tk.Spinbox(self.widgets['frame1'], from_=0, to=59, increment=5, justify='center', relief='flat', width=2)
                 self.widgets['minute'].grid(row=3, column=3)    
     
                 self.widgets['frame2'] = tk.Frame(self)
                 self.widgets['frame2'].grid(row=7, rowspan=1, columnspan=6, padx=5, pady=5) 
                 
-                self.widgets['createSeason'] = tk.Button(self.widgets['frame2'], text='Create\nnew race', height=2, width=11)
-                self.widgets['createSeason'].grid(row=1, column=0, sticky='E', padx=5, pady=5)
-                self.widgets['createSeason'].bind('<Button-1>', createRace)
+                self.widgets['createRace'] = tk.Button(self.widgets['frame2'], text='Create\nnew race', height=2, width=11)
+                self.widgets['createRace'].grid(row=1, column=0, sticky='E', padx=5, pady=5)
+                self.widgets['createRace'].bind('<Button-1>', createRace)
                 
                 self.widgets['cancel'] = tk.Button(self.widgets['frame2'], text='Cancel', height=2, width=11)
                 self.widgets['cancel'].grid(row=1, column=1, sticky='E', padx=5, pady=5)
@@ -375,9 +387,9 @@ class Desktop(tk.Frame):
         self.widgets['deleteRace'].grid(row=1, column=2, sticky='E', padx=5, pady=5)
         self.widgets['deleteRace'].bind('<Button-1>', deleteRace)
         
-        self.widgets['quit'] = tk.Button(self.widgets['frame3'], text='Quit', height=2, width=11)
-        self.widgets['quit'].grid(row=1, column=3, sticky='E', padx=5, pady=5)
-        self.widgets['quit'].bind('<Button-1>', self.quitApp)
+        self.widgets['Exit'] = tk.Button(self.widgets['frame3'], text='Exit', height=2, width=11)
+        self.widgets['Exit'].grid(row=1, column=3, sticky='E', padx=5, pady=5)
+        self.widgets['Exit'].bind('<Button-1>', self.exitApp)
 
         self.selectedSeason = ()
         displayRaces()
@@ -392,6 +404,9 @@ class Desktop(tk.Frame):
             if self.widgets['tree'].item(selectedItem)['values'] != '':
                 self.program.showPlan(self.widgets['tree'].item(selectedItem)['text'],
                                       self.widgets['tree'].item(selectedItem)['values'])   
+                  
+        def newPlanWindow(event):
+            self.program.newPlanWindow()
                   
         def deletePlan(event):
             selectedItem = self.widgets['tree'].focus()
@@ -429,7 +444,7 @@ class Desktop(tk.Frame):
         
         self.widgets['newPlan'] = tk.Button(self.widgets['frame3'], text='New plan', height=2, width=10)
         self.widgets['newPlan'].grid(row=0, column=0, sticky='E', padx=5, pady=5)
-        self.widgets['newPlan'].bind('<Button-1>', self.newPlanWindow)
+        self.widgets['newPlan'].bind('<Button-1>', newPlanWindow)
         
         self.widgets['openPlan'] = tk.Button(self.widgets['frame3'], text='Open plan', height=2, width=10)
         self.widgets['openPlan'].grid(row=0, column=1, sticky='E', padx=5, pady=5)
@@ -443,11 +458,11 @@ class Desktop(tk.Frame):
         self.widgets['back'].grid(row=0, column=3, sticky='E', padx=5, pady=5)
         self.widgets['back'].bind('<Button-1>', self.backToUserDataView)
 
-        self.widgets['quit'] = tk.Button(self.widgets['frame3'], text='Quit', height=2, width=11)
-        self.widgets['quit'].grid(row=0, column=4, sticky='E', padx=5, pady=5)
-        self.widgets['quit'].bind('<Button-1>', self.quitApp)
+        self.widgets['Exit'] = tk.Button(self.widgets['frame3'], text='Exit', height=2, width=11)
+        self.widgets['Exit'].grid(row=0, column=4, sticky='E', padx=5, pady=5)
+        self.widgets['Exit'].bind('<Button-1>', self.exitApp)
 
-    def newPlanWindow(self, event, errordata=''):
+    def newPlanWindow(self, startData, errordata=''):
         
         def createPlan(event):
             self.program.createPlan(self.widgets['annualHours'].get(), self.typeOfPlan.get(), 
@@ -482,31 +497,50 @@ class Desktop(tk.Frame):
         self.widgets['radio1'].grid(row=1, column=1, columnspan=2,pady=5)
         self.widgets['radio2'] = tk.Radiobutton(self.widgets['frame1'], text='Reversed', variable=self.typeOfPlan, value=2)
         self.widgets['radio2'].grid(row=1, column=3, columnspan=2, pady=5)
-          
+        
         self.widgets['startlabel'] = tk.Label(self.widgets['frame1'], text='Start of plan (dd.mm.yy, must be Monday): ')
         self.widgets['startlabel'].grid(row=2, pady=5)
-        self.widgets['startDay'] = tk.Spinbox(self.widgets['frame1'], from_=1, to=31, increment=1, justify='center', relief='flat', width=2)
+        
+        self.startDay = tk.StringVar(self)
+        self.startDay.set(startData[0])
+        
+        self.widgets['startDay'] = tk.Spinbox(self.widgets['frame1'], from_=1, to=31, increment=1, justify='center', relief='flat', width=2, textvariable=self.startDay)
         self.widgets['startDay'].grid(row=2, column=1) 
         self.widgets['dotLabel'] = tk.Label(self.widgets['frame1'], text='.', width=1)
-        self.widgets['dotLabel'].grid(row=2, column=2)  
-        self.widgets['startMonth'] = tk.Spinbox(self.widgets['frame1'], from_=1, to=12, increment=1, justify='center', relief='flat', width=2)
+        self.widgets['dotLabel'].grid(row=2, column=2)
+        
+        self.startMonth = tk.StringVar(self)
+        self.startMonth.set(startData[1])
+          
+        self.widgets['startMonth'] = tk.Spinbox(self.widgets['frame1'], from_=1, to=12, increment=1, justify='center', relief='flat', width=2, textvariable=self.startMonth)
         self.widgets['startMonth'].grid(row=2, column=3) 
         self.widgets['dot2Label'] = tk.Label(self.widgets['frame1'], text='.', width=1)
-        self.widgets['dot2Label'].grid(row=2, column=4)     
-        self.widgets['startYear'] = tk.Spinbox(self.widgets['frame1'], from_=15, to=50, increment=1, justify='center', relief='flat', width=2)
+        self.widgets['dot2Label'].grid(row=2, column=4)       
+        
+        self.startYear = tk.StringVar(self)
+        self.startYear.set(startData[2])
+        
+        self.widgets['startYear'] = tk.Spinbox(self.widgets['frame1'], from_=startData[2], to=startData[2]+70, increment=1, justify='center', relief='flat', width=2, textvariable=self.startYear)
         self.widgets['startYear'].grid(row=2, column=5)   
+        
+        self.endDay = tk.StringVar(self)
+        self.endDay.set(31)
+        self.endMonth = tk.StringVar(self)
+        self.endMonth.set(12)        
+        self.endYear = tk.StringVar(self)
+        self.endYear.set(startData[2])        
         
         self.widgets['endlabel'] = tk.Label(self.widgets['frame1'], text='End of plan (dd.mm.yy): ')
         self.widgets['endlabel'].grid(row=3, pady=5)
-        self.widgets['endDay'] = tk.Spinbox(self.widgets['frame1'], from_=1, to=31, increment=1, justify='center', relief='flat', width=2)
+        self.widgets['endDay'] = tk.Spinbox(self.widgets['frame1'], from_=1, to=31, increment=1, justify='center', relief='flat', width=2, textvariable=self.endDay)
         self.widgets['endDay'].grid(row=3, column=1) 
         self.widgets['dotLabel'] = tk.Label(self.widgets['frame1'], text='.', width=1)
         self.widgets['dotLabel'].grid(row=3, column=2)  
-        self.widgets['endMonth'] = tk.Spinbox(self.widgets['frame1'], from_=1, to=12, increment=1, justify='center', relief='flat', width=2)
+        self.widgets['endMonth'] = tk.Spinbox(self.widgets['frame1'], from_=1, to=12, increment=1, justify='center', relief='flat', width=2, textvariable=self.endMonth)
         self.widgets['endMonth'].grid(row=3, column=3) 
         self.widgets['dot2Label'] = tk.Label(self.widgets['frame1'], text='.', width=1)
         self.widgets['dot2Label'].grid(row=3, column=4)     
-        self.widgets['endYear'] = tk.Spinbox(self.widgets['frame1'], from_=15, to=50, increment=1, justify='center', relief='flat', width=2)
+        self.widgets['endYear'] = tk.Spinbox(self.widgets['frame1'], from_=startData[2], to=startData[2]+70, increment=1, justify='center', relief='flat', width=2, textvariable=self.endYear)
         self.widgets['endYear'].grid(row=3, column=5)         
      
         self.widgets['frame2'] = tk.Frame(self)
@@ -593,9 +627,9 @@ class Desktop(tk.Frame):
         self.widgets['back'].grid(row=0, column=1, sticky='E', padx=5, pady=5)
         self.widgets['back'].bind('<Button-1>', self.backToDisplayPlans)
 
-        self.widgets['quit'] = tk.Button(self.widgets['frame3'], text='Quit', height=2, width=11)
-        self.widgets['quit'].grid(row=0, column=2, sticky='E', padx=5, pady=5)
-        self.widgets['quit'].bind('<Button-1>', self.quitApp)
+        self.widgets['Exit'] = tk.Button(self.widgets['frame3'], text='Exit', height=2, width=11)
+        self.widgets['Exit'].grid(row=0, column=2, sticky='E', padx=5, pady=5)
+        self.widgets['Exit'].bind('<Button-1>', self.exitApp)
 
         self.widgets['graph'] = Graph(data, self.widgets['frame4'])
         self.widgets['graph'].grid()
@@ -622,7 +656,7 @@ class Desktop(tk.Frame):
     def messageBox(self, title, body):
         self.widgets['failMesage'] = messagebox.showinfo(title, body)
 
-    def quitApp(self, event):
+    def exitApp(self, event):
         self.quit()
 
 if __name__ == '__main__':

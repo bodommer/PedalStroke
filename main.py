@@ -13,6 +13,9 @@ class Program:
     def __init__(self):
         self.activeUser = self.activeSeason = self.activePlan = None
         root = tk.Tk()
+        self.startDay = datetime.date.today().day
+        self.startMonth = datetime.date.today().month
+        self.startYear = datetime.date.today().year - 2000
         self.gui = Desktop(self, root)
         self.gui.chooseUser(self.getListOfUsers())
         self.gui.mainloop()
@@ -26,7 +29,7 @@ class Program:
         else:
             self.gui.displayUserData({'name': self.activeUser.getName(), 'age':self.activeUser.getAge(), 'cp60':self.activeUser.getcp60(), 'maxHR':self.activeUser.getmaxHR(), 
                                       'yearsOfExperience':self.activeUser.getYearsOfExperience(), 'strong1':self.activeUser.getStrong1(), 'strong2':self.activeUser.getStrong2(), 
-                                      'weak1':self.activeUser.getWeak1(), 'weak2':self.activeUser.getWeak2()}, self.getUserSeasons())
+                                      'weak1':self.activeUser.getWeak1(), 'weak2':self.activeUser.getWeak2()}, self.getUserSeasons(), (self.startDay, self.startMonth, self.startYear))
             
     def chosenUser(self, selected):
         if selected == 'Create user':
@@ -48,7 +51,7 @@ class Program:
             self.activeUser.loadUser(user_id)
         self.gui.displayUserData({'name': self.activeUser.getName(), 'age':self.activeUser.getAge(), 'cp60':self.activeUser.getcp60(), 'maxHR':self.activeUser.getmaxHR(), 
                                   'yearsOfExperience':self.activeUser.getYearsOfExperience(), 'strong1':self.activeUser.getStrong1(), 'strong2':self.activeUser.getStrong2(), 
-                                  'weak1':self.activeUser.getWeak1(), 'weak2':self.activeUser.getWeak2()}, self.getUserSeasons())
+                                  'weak1':self.activeUser.getWeak1(), 'weak2':self.activeUser.getWeak2()}, self.getUserSeasons(), (self.startDay, self.startMonth, self.startYear))
         ### chyba??? - DOROBIT
         
     def getListOfUsers(self):
@@ -80,6 +83,7 @@ class Program:
 
     def deleteUser(self):
         if self.activeUser.deleteUser():
+            self.activeUser = None
             self.gui.chooseUser(self.getListOfUsers())
         else:
             self.gui.messageBox("Delete user error", "User was not deleted")
@@ -89,11 +93,12 @@ class Program:
         self.activeSeason.createSeason(int(year), self.activeUser.id)
         self.gui.displayUserData({'name': self.activeUser.getName(), 'age':self.activeUser.getAge(), 'cp60':self.activeUser.getcp60(), 'maxHR':self.activeUser.getmaxHR(), 
                                   'yearsOfExperience':self.activeUser.getYearsOfExperience(), 'strong1':self.activeUser.getStrong1(), 'strong2':self.activeUser.getStrong2(), 
-                                  'weak1':self.activeUser.getWeak1(), 'weak2':self.activeUser.getWeak2()}, self.getUserSeasons())
-        if self.activeSeason.errordata[0] == ['already exists']:
-            self.gui.messageBox("Season creation error", "This season already exists!")
-        else:
-            self.gui.messageBox("Season creation error", "Year is in the past or in far future!")                
+                                  'weak1':self.activeUser.getWeak1(), 'weak2':self.activeUser.getWeak2()}, self.getUserSeasons(), (self.startDay, self.startMonth, self.startYear))
+        if self.activeSeason.errordata != []:
+            if self.activeSeason.errordata[0] == ['already exists']:
+                self.gui.messageBox("Season creation error", "This season already exists!")
+            else:
+                self.gui.messageBox("Season creation error", "Year is in the past or in far future!")                
     
     def getSeasonRaces(self, season_id):
         season = Season(season_id)
@@ -109,7 +114,7 @@ class Program:
         else:
             self.gui.displayUserData({'name': self.activeUser.getName(), 'age':self.activeUser.getAge(), 'cp60':self.activeUser.getcp60(), 'maxHR':self.activeUser.getmaxHR(), 
                                       'yearsOfExperience':self.activeUser.getYearsOfExperience(), 'strong1':self.activeUser.getStrong1(), 'strong2':self.activeUser.getStrong2(), 
-                                      'weak1':self.activeUser.getWeak1(), 'weak2':self.activeUser.getWeak2()}, self.getUserSeasons())
+                                      'weak1':self.activeUser.getWeak1(), 'weak2':self.activeUser.getWeak2()}, self.getUserSeasons(), (self.startDay, self.startMonth, self.startYear))
             self.gui.messageBox("Season loading error", "Something went wrong!")
         
     def deleteSeason(self, season_year):
@@ -117,7 +122,7 @@ class Program:
         self.activeSeason = None
         self.gui.displayUserData({'name': self.activeUser.getName(), 'age':self.activeUser.getAge(), 'cp60':self.activeUser.getcp60(), 'maxHR':self.activeUser.getmaxHR(), 
                                   'yearsOfExperience':self.activeUser.getYearsOfExperience(), 'strong1':self.activeUser.getStrong1(), 'strong2':self.activeUser.getStrong2(), 
-                                  'weak1':self.activeUser.getWeak1(), 'weak2':self.activeUser.getWeak2()}, self.getUserSeasons())
+                                  'weak1':self.activeUser.getWeak1(), 'weak2':self.activeUser.getWeak2()}, self.getUserSeasons(), (self.startDay, self.startMonth, self.startYear))
 
     def createRace(self, name, year, month, day, priority, hour, minute, seasonID):
         date = datetime.date(int(year)+2000, int(month), int(day))
@@ -130,7 +135,7 @@ class Program:
         if race.errordata == []:
             self.gui.displayUserData({'name': self.activeUser.getName(), 'age':self.activeUser.getAge(), 'cp60':self.activeUser.getcp60(), 'maxHR':self.activeUser.getmaxHR(), 
                                       'yearsOfExperience':self.activeUser.getYearsOfExperience(), 'strong1':self.activeUser.getStrong1(), 'strong2':self.activeUser.getStrong2(), 
-                                      'weak1':self.activeUser.getWeak1(), 'weak2':self.activeUser.getWeak2()}, self.getUserSeasons())
+                                      'weak1':self.activeUser.getWeak1(), 'weak2':self.activeUser.getWeak2()}, self.getUserSeasons(), (self.startDay, self.startMonth, self.startYear))
         else:
             self.gui.messageBox("Race creation error", "Race was not added:\nInput data were probably wrong")
             self.gui.newRaceWindow(1, self.season, race.errordata)
@@ -143,7 +148,7 @@ class Program:
             season.deleteRace(race_id)
         self.gui.displayUserData({'name': self.activeUser.getName(), 'age':self.activeUser.getAge(), 'cp60':self.activeUser.getcp60(), 'maxHR':self.activeUser.getmaxHR(), 
                                   'yearsOfExperience':self.activeUser.getYearsOfExperience(), 'strong1':self.activeUser.getStrong1(), 'strong2':self.activeUser.getStrong2(), 
-                                  'weak1':self.activeUser.getWeak1(), 'weak2':self.activeUser.getWeak2()}, self.getUserSeasons())
+                                  'weak1':self.activeUser.getWeak1(), 'weak2':self.activeUser.getWeak2()}, self.getUserSeasons(), (self.startDay, self.startMonth, self.startYear))
     
     def createPlan(self, annualHours, typeOfPlan, startYear, startMonth, startDay, endYear, endMonth, endDay, id=0):
         annualHours = int(annualHours)
@@ -158,14 +163,22 @@ class Program:
         if self.activePlan.errordata == []:
             self.gui.displaySeasonPlans(self.activeSeason.getPlans(), self.activeSeason.getYear())
         else:
-            self.newPlanWindow(self.activePlan.errordata) 
+            self.newPlanWindow((self.startDay, self.startMonth, self.startYear), self.activePlan.errordata) 
+                
+    def newPlanWindow(self):
+        self.gui.newPlanWindow((self.startDay, self.startMonth, self.startYear))
                                
     def showPlan(self, plan_id, planInfo):   
-        def convert(value):
-            if value == 1:
-                return 'X'
+        def convert(value, gym=False):
+            if gym:
+                if len(value) == 2:
+                    return value
+                return '-'
             else:
-                return ' '
+                if value == 1:
+                    return 'X'
+                else:
+                    return ' '
             
         self.activePlan = Plan(plan_id)
         data = self.activePlan.getPlanData()
@@ -176,6 +189,8 @@ class Program:
                 for prop in ('endurance', 'force', 'speedSkills', 'eForce',
                                  'aEndurance', 'maxPower', 'test'):
                     week[prop] = convert(week[prop])
+                for prop in ('gym',):
+                    week[prop] = convert(week[prop], True)
                     
         self.gui.showPlanWindow(data, planInfo) #zavola metodu na zobrazenie plan hubu
 

@@ -63,8 +63,10 @@ class Graph(tk.Canvas):
         'Build 2-4': {'C': 0.98,'F': 0.26, 'T': -0.15}, 
         'Peak 1': {'C': 1.02, 'F': 0.17, 'T': 0.05},
         'Peak 2': {'C': 1.02, 'F': 0.15, 'T': 0.05}, 
-        'Racing': {'C': 0.98,'F': -0.25, 'T': 0.2}, 
-        'Transitory': {'C': 0.9,'F': 0.05, 'T': -0.35}}
+        'Racing-1': {'C': 0.98,'F': -0.25, 'T': 0.2}, 
+        'Racing-2': {'C': 0.98,'F': -0.25, 'T': 0.2}, 
+        'Racing-3': {'C': 0.98,'F': -0.25, 'T': 0.2},         
+        'Recovery-1': {'C': 0.9,'F': 0.05, 'T': -0.35}}
 
         self.create_line(5, 525, 594, 525)
         self.cPoints = []
@@ -124,18 +126,18 @@ class Graph(tk.Canvas):
             for i in range(len(self.xCoords)):
                 if self.xCoords[i][0] <= event.x <= self.xCoords[i][1]:
                     if event.y >= self.yCoords[i]:
-                        if event.x > 428:
-                            x = 429
+                        if event.x > 426:
+                            x = 427
                         else:
                             x = event.x+1
-                        if event.y < 106:
-                            y = 105
+                        if event.y < 108:
+                            y = 107
                         else:
                             y = event.y-1
                         if not self.field:
-                            self.field = self.create_rectangle(x, y-80, x+170, y, fill='white')
+                            self.field = self.create_rectangle(x+3, y-77, x+170, y, fill='white')
                         else:
-                            self.coords(self.field, (x, y-80, x+170, y))
+                            self.coords(self.field, (x+3, y-77, x+170, y))
                         wk = self.data[i]
                         monday = '{}/{}'.format(wk['monday'].day, wk['monday'].month)
                         text='Week: {}\nPeriod: {}\nHours: {}\nMonday: {}\nTraining:'.format(wk['week'], wk['period'][:-2], wk['weeklyHours'], monday)

@@ -29,7 +29,7 @@ class Plan:
         if peakPeriods == []:
             self.setOtherWeeks(planWeeks, weeksCount-1, typeOfPlan, weeksCount-1, age)   
         else:         
-            self.setOtherWeeks(planWeeks, weeksCount-1, typeOfPlan, peakPeriods[0], activeUser)
+            self.setOtherWeeks(planWeeks, weeksCount-1, typeOfPlan, peakPeriods[0], age)
         self.setSkillTraining(planWeeks, activeUser, annualHours)
         self.planWeeks = planWeeks
         self.setAllRaces(season)
@@ -48,6 +48,8 @@ class Plan:
             planID = a.fetchone()
             planID = planID['id']
             for p in self.planWeeks:
+                if p.week == 9:
+                    print('week9',p.getRace())
                 add_planWeek = ("INSERT INTO tp_planweek VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)")
                 data_planWeek = (id, p.getAEndurance(), p.getEForce(), p.getEndurance(), p.getForce(), p.getGym(), p.getMaxPower(), p.getMonday(), p.getPeriod(), p.getSpeedSkills(), p.getTest(), p.getWeek(), p.getWeeklyHours(), p.getRace(), planID)
                 a.execute(add_planWeek, data_planWeek)
@@ -126,27 +128,34 @@ class Plan:
         a=conn.cursor()
         get_races = ("SELECT date FROM tp_seasonrace WHERE season_id={} AND priority=3".format(season))
         a.execute(get_races)
-        for data in a:     #priradzovanie pretekov k tyzdnom
+        races = a.fetchall()
+        a.close()
+        conn.close()
+        print(races)
+        for data in races:     #priradzovanie pretekov k tyzdnom
             for week in planWeeks:      #skusa pre kazdy tyzden:
                 mon = week.getMonday()
                 if mon <= data['date'] < mon + datetime.timedelta(days=7):  # ak je datum pretekov v danom tyzdni
                     week.setRace(data)
                     break
-        a.close()
-        conn.close()
         return planWeeks
         
     def whenIsPeakRace(self, planWeeks, weeksCount):
+        for week in planWeeks:
+            print(week.races)
         peaks = []
         for i in range(weeksCount-1, -1, -1):
             for r in planWeeks[i].races:
                 if i not in peaks:
                     peaks.append(planWeeks[i].week)
+        print('pekas', peaks)
         return peaks
     
     def makePeakPeriods(self, peak, activeUser, age):   
         if peak == []:
             return [] 
+        print(peak)
+        print('age:', age)
         if age > 40: #or gender = woman
             shorterPeriods = 1
         else:
@@ -158,25 +167,37 @@ class Plan:
             else:
                 return []
         else:
+            print('peak', peak)
             peakPeriods = []
             ref = 0
-            while ref != peak[-1]:
-                for i in range(1, 3):
+            while peak[ref] != peak[-1]:
+                print('ref:', peak[ref], 'ref+1', peak[ref+1])
+                minimum = min(len(peak)-ref, 3)
+                for i in range(1, minimum):
                     if peak[ref] - peak[ref+i] < 3:
                         if peak[ref+i] < 6 - shorterPeriods:
                             peak.pop(ref+i)
                         else:
                             peakPeriods.append([range(ref, ref+i+1)])
                             ref = peak[ref+i]
+                    else:
+                        peakPeriods.append(peak[ref])
+                ref += i
+            if peak[ref-1] - peak[ref] > 6 or peak[ref-1] - peak[ref] == 1:
+                peakPeriods.append(peak[ref]) 
+            print('vraciam', peakPeriods)
             return peakPeriods
             
     def assignRaceWeeks(self, planWeeks, racePeriods):
+        print('raceperiods', racePeriods)
         for week in planWeeks:
             if week.getWeek() in racePeriods:
+                print('week:', week.getWeek())
                 week.setPeriod('Racing-1')
     
     def setOtherWeeks(self, planWeeks, weekNumber, typ, peak0, age):
         index = 0
+        print('age2', age)
         if age > 39: #or gender = woman
             if typ == 'normal':
                 periods = ['Peak 2', 'Peak 1', 
@@ -241,7 +262,7 @@ class Plan:
         weak = data['weak1']
         weak2 = data['weak2']
         strong = data['strong1']
-        strong2 = data['strong2']
+        #strong2 = data['strong2']
         if True:
         #if activeUser.getAge() < 40: #pre 4-tyzdnove cykly
             for week in planWeeks:
@@ -370,16 +391,24 @@ class Plan:
         a=conn.cursor()
         get_races = ("SELECT * FROM tp_seasonrace WHERE season_id={}".format(season))
         a.execute(get_races)
-        if a:
-            for data in a:     #priradzovanie pretekov k tyzdnom
+        races = a.fetchall()
+        a.close()
+        conn.close()
+        print('race', races)
+        for week in self.planWeeks:      #skusa pre kazdy tyzden:
+            week.races = []
+        if races:
+            for data in races:     #priradzovanie pretekov k tyzdnom
                 for week in self.planWeeks:      #skusa pre kazdy tyzden:
-                    week.races = []
                     mon = week.getMonday()
                     if mon <= data['date'] < mon + datetime.timedelta(days=7):  # ak je datum pretekov v danom tyzdni
                         week.setRace(data['name'])
+                        print(data['name'])
+                        print(week.getRace())
+                        print(week.week)
                         break
-        a.close()
-        conn.close()
+        print(self.planWeeks[9].races)
+
         
     def getPlanData(self):    
         conn= pymysql.connect(host='localhost',user='root',password='password',db='trainingplan',charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor)

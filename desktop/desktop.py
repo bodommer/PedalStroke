@@ -52,11 +52,11 @@ class Desktop(tk.Frame):
 #         self.widgets['scrollbar'].config(command=self.widgets['listbox'].yview)
 #===============================================================================
             
-        self.widgets['confirm'] = tk.Button(self, text='Ok')
+        self.widgets['confirm'] = tk.Button(self, text='     Ok     ')
         self.widgets['confirm'].grid(row=4, sticky='W', padx=5, pady=5)
         self.widgets['confirm'].bind('<Button-1>', chosenUser)        
         
-        self.widgets['Exit'] = tk.Button(self, text='Exit')
+        self.widgets['Exit'] = tk.Button(self, text=' Exit ')
         self.widgets['Exit'].grid(row=4, sticky='E', padx=5, pady=5)
         self.widgets['Exit'].bind('<Button-1>', self.exitApp)
 
